@@ -3,6 +3,8 @@ import { resolve } from 'path';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
+import livereload from 'rollup-plugin-livereload';
+import serve from 'rollup-plugin-serve';
 import { terser } from 'rollup-plugin-terser';
 
 import prependHtml from './rollup-plugins/prependHtml';
@@ -31,6 +33,8 @@ export default {
         })
       : null,
     prependHtml(),
+    isProduction ? null : serve({ open: true }),
+    isProduction ? null : livereload(),
   ],
   output: {
     file: 'index.html',
