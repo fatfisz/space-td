@@ -1,11 +1,13 @@
-import { useGui } from 'gui';
+import { defaultPixelSize } from 'config';
+import { initDisplay, updateDisplay } from 'display';
+import { initGui, updateGui } from 'gui';
 
 export function engineInit() {
   if (process.env.NODE_ENV !== 'production') {
     const style = document.createElement('style');
     style.textContent = `
       canvas {
-        outline: 3px solid black;
+        outline: ${defaultPixelSize}px solid black;
       }
 
       .dg.ac {
@@ -15,7 +17,11 @@ export function engineInit() {
     document.head.append(style);
   }
 
-  useGui((gui) => {
-    gui.open();
-  });
+  initGui();
+  initDisplay();
+}
+
+export function engineTick() {
+  updateDisplay();
+  updateGui();
 }

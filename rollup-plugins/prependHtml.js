@@ -7,7 +7,7 @@ export default function replace() {
     name: 'prepend HTML',
 
     renderChunk(code) {
-      return html + `<script>${code}</script>`;
+      return html + `<script>(()=>{${code}})()</script>`;
     },
   };
 }
