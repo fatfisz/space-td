@@ -6,11 +6,9 @@ declare global {
   }
 }
 
-export function initGui(open = true) {
+export function initGui() {
   useGui((gui) => {
-    if (open) {
-      gui.open();
-    }
+    gui.open();
   });
 }
 

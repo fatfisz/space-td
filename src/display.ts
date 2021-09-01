@@ -20,6 +20,17 @@ let dragging = false;
 const midCanvas = new Point(displayWidth / 2, displayHeight / 2);
 
 export function initDisplay() {
+  initGui();
+  document.body.append(canvas);
+  initMouse();
+}
+
+export function updateDisplay() {
+  clearCanvas();
+  drawDrawables(context);
+}
+
+function initGui() {
   useGuiFolder({
     name: 'display',
     props: {
@@ -35,10 +46,7 @@ export function initDisplay() {
         cameraZoom = 1;
       },
     },
-    open: true,
   });
-  document.body.append(canvas);
-  initMouse();
 }
 
 function initMouse() {
@@ -122,11 +130,6 @@ function updateMouseFromEvent(event = { clientX: NaN, clientY: NaN }) {
 
 function cameraFromCanvas(canvasPosition: Point) {
   return canvasPosition.sub(mousePosition.sub(midCanvas).mul(1 / cameraZoom));
-}
-
-export function updateDisplay() {
-  clearCanvas();
-  drawDrawables(context);
 }
 
 function clearCanvas() {
