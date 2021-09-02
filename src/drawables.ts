@@ -1,12 +1,15 @@
 type Priority = typeof priorityOrder[number];
 
-type Draw = (
-  context: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) => void;
+interface DisplayState {
+  x: number;
+  y: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+type Draw = (context: CanvasRenderingContext2D, displayState: DisplayState) => void;
 
 const priorityOrder = ['grid'] as const;
 
@@ -27,20 +30,14 @@ export function removeDrawable(handle: number) {
   drawables.delete(handle);
 }
 
-export function drawDrawables(
-  context: CanvasRenderingContext2D,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number,
-) {
+export function drawDrawables(context: CanvasRenderingContext2D, displayState: DisplayState) {
   const drawGroupedByPriority = priorityOrder.map<Draw[]>(() => []);
   for (const [priority, draw] of drawables.values()) {
     drawGroupedByPriority[priority].push(draw);
   }
   for (const drawGroup of drawGroupedByPriority) {
     for (const draw of drawGroup) {
-      draw(context, x1, y1, x2, y2);
+      draw(context, displayState);
     }
   }
 }

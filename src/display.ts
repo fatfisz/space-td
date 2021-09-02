@@ -25,13 +25,14 @@ export function initDisplay() {
 
 export function updateDisplay() {
   clearCanvas();
-  drawDrawables(
-    context,
-    cameraPosition.x - (displaySize / 2 + 1) / cameraZoom,
-    cameraPosition.y - (displaySize / 2 + 1) / cameraZoom,
-    cameraPosition.x + (displaySize / 2 + 1) / cameraZoom,
-    cameraPosition.y + (displaySize / 2 + 1) / cameraZoom,
-  );
+  drawDrawables(context, {
+    x: canvasPosition.x,
+    y: canvasPosition.y,
+    x1: cameraPosition.x - (displaySize / 2 + 1) / cameraZoom,
+    y1: cameraPosition.y - (displaySize / 2 + 1) / cameraZoom,
+    x2: cameraPosition.x + (displaySize / 2 + 1) / cameraZoom,
+    y2: cameraPosition.y + (displaySize / 2 + 1) / cameraZoom,
+  });
 }
 
 function initGui() {
