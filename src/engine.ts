@@ -1,15 +1,11 @@
-import { defaultPixelSize } from 'config';
 import { initDisplay, updateDisplay } from 'display';
+import { initGrid } from 'grid';
 import { initGui, updateGui } from 'gui';
 
-export function engineInit() {
+export function initEngine() {
   if (process.env.NODE_ENV !== 'production') {
     const style = document.createElement('style');
     style.textContent = `
-      canvas {
-        outline: ${defaultPixelSize}px solid black;
-      }
-
       .dg.ac {
         z-index: 1 !important;
       }
@@ -19,6 +15,7 @@ export function engineInit() {
 
   initGui();
   initDisplay();
+  initGrid();
 }
 
 export function engineTick() {

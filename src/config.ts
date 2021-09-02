@@ -1,8 +1,4 @@
-export const displayWidth = 1000;
-
-export const displayHeight = 1000;
-
-export const defaultPixelSize = 3;
+export const displaySize = 320;
 
 export const dragThreshold = 5;
 

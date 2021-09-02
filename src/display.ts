@@ -1,11 +1,11 @@
 import { getCanvas } from 'canvas';
 import { colors } from 'colors';
-import { displayHeight, displayWidth, dragThreshold, maxZoom, minZoom, zoomStep } from 'config';
+import { displaySize, dragThreshold, maxZoom, minZoom, zoomStep } from 'config';
 import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
 import { Point } from 'point';
 
-const [canvas, context] = getCanvas(displayWidth, displayHeight, true);
+const [canvas, context] = getCanvas(displaySize, displaySize);
 canvas.style.background = colors.black;
 
 let cameraPosition = Point.zero;
@@ -17,8 +17,6 @@ let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
 let dragging = false;
 
-const midCanvas = new Point(displayWidth / 2, displayHeight / 2);
-
 export function initDisplay() {
   initGui();
   document.body.append(canvas);
@@ -27,7 +25,13 @@ export function initDisplay() {
 
 export function updateDisplay() {
   clearCanvas();
-  drawDrawables(context);
+  drawDrawables(
+    context,
+    cameraPosition.x - (displaySize / 2 + 1) / cameraZoom,
+    cameraPosition.y - (displaySize / 2 + 1) / cameraZoom,
+    cameraPosition.x + (displaySize / 2 + 1) / cameraZoom,
+    cameraPosition.y + (displaySize / 2 + 1) / cameraZoom,
+  );
 }
 
 function initGui() {
@@ -98,8 +102,8 @@ function initMouse() {
       !mousePosition.empty() &&
       (mousePosition.x < 0 ||
         mousePosition.y < 0 ||
-        mousePosition.x > displayWidth ||
-        mousePosition.y > displayHeight)
+        mousePosition.x > displaySize ||
+        mousePosition.y > displaySize)
     ) {
       updateMouseFromEvent();
     }
@@ -119,23 +123,25 @@ function initMouse() {
 function updateMouseFromEvent(event = { clientX: NaN, clientY: NaN }) {
   const rect = canvas.getBoundingClientRect();
   mousePosition = new Point(
-    (event.clientX - rect.left) * (displayWidth / rect.width),
-    (event.clientY - rect.top) * (displayHeight / rect.height),
+    (event.clientX - rect.left) * (displaySize / rect.width),
+    (event.clientY - rect.top) * (displaySize / rect.height),
   );
   canvasPosition = mousePosition
-    .sub(midCanvas)
+    .sub(new Point(displaySize / 2, displaySize / 2))
     .mul(1 / cameraZoom)
     .add(cameraPosition);
 }
 
 function cameraFromCanvas(canvasPosition: Point) {
-  return canvasPosition.sub(mousePosition.sub(midCanvas).mul(1 / cameraZoom));
+  return canvasPosition.sub(
+    mousePosition.sub(new Point(displaySize / 2, displaySize / 2)).mul(1 / cameraZoom),
+  );
 }
 
 function clearCanvas() {
   context.resetTransform();
-  context.clearRect(0, 0, displayWidth, displayHeight);
-  context.translate(displayWidth / 2, displayHeight / 2);
+  context.clearRect(0, 0, displaySize, displaySize);
+  context.translate(displaySize / 2, displaySize / 2);
   context.scale(cameraZoom, cameraZoom);
   context.translate(-cameraPosition.x, -cameraPosition.y);
 }
