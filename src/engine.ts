@@ -1,6 +1,7 @@
 import { initDisplay, updateDisplay } from 'display';
 import { initGrid } from 'grid';
 import { initGui, updateGui } from 'gui';
+import { initObjects } from 'objects';
 
 export function initEngine() {
   if (process.env.NODE_ENV !== 'production') {
@@ -15,6 +16,7 @@ export function initEngine() {
 
   initGui();
   initDisplay();
+  initObjects();
   initGrid();
 }
 
