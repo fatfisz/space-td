@@ -81,6 +81,11 @@ function initMouse() {
       Math.min(maxZoom, cameraZoom - Math.sign(event.deltaY) * zoomStep),
     );
     cameraPosition = cameraFromCanvas(canvasPosition);
+    // Adjust so that the transform is always an integer
+    cameraPosition = new Point(
+      Math.round(cameraPosition.x * cameraZoom) / cameraZoom,
+      Math.round(cameraPosition.y * cameraZoom) / cameraZoom,
+    );
   });
 
   canvas.addEventListener('mouseout', () => {

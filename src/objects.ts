@@ -40,7 +40,7 @@ const objectTypes = {
       context.fillStyle = 'lightblue';
       context.fillRect(x * blockSize, y * blockSize, blockSize * 3, blockSize * 3);
       context.fillStyle = 'white';
-      context.font = '12px monospace';
+      context.font = '16px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('💩', (x + 1.5) * blockSize, (y + 1.5) * blockSize);
@@ -53,7 +53,7 @@ const objectTypes = {
       context.fillStyle = 'lightblue';
       context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
       context.fillStyle = 'white';
-      context.font = '12px monospace';
+      context.font = '16px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🌞', (x + 0.5) * blockSize, (y + 0.5) * blockSize);
@@ -66,7 +66,7 @@ const objectTypes = {
       context.fillStyle = 'lightblue';
       context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
       context.fillStyle = 'white';
-      context.font = '12px monospace';
+      context.font = '16px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔋', (x + 0.5) * blockSize, (y + 0.5) * blockSize);
@@ -79,7 +79,7 @@ const objectTypes = {
       context.fillStyle = 'salmon';
       context.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
       context.fillStyle = 'white';
-      context.font = '12px monospace';
+      context.font = '16px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔫', (x + 0.5) * blockSize, (y + 0.5) * blockSize);
