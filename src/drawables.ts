@@ -11,7 +11,7 @@ interface DisplayState {
 
 type Draw = (context: CanvasRenderingContext2D, displayState: DisplayState) => void;
 
-const priorityOrder = ['objects', 'grid'] as const;
+const priorityOrder = ['objects', 'ground', 'grid'] as const;
 
 const drawablePriorityId = Object.fromEntries(
   priorityOrder.map((name, index) => [name, index]),
