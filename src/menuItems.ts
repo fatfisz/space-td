@@ -5,7 +5,7 @@ import { getActiveObject } from 'objects';
 
 export type TabName = 'build' | 'info';
 
-export type MenuItem = { type: 'tab'; name: TabName } | { type: 'menu' };
+export type MenuItem = typeof tabs[TabName]['menuItem'] | typeof menuBackground;
 
 export const menuBackground = { type: 'menu' } as const;
 
