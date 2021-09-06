@@ -1,6 +1,7 @@
 import { getCanvas } from 'canvas';
 import { colors } from 'colors';
 import {
+  blockSize,
   displayHeight,
   displayWidth,
   dragThreshold,
@@ -18,7 +19,7 @@ import { Point } from 'point';
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
 canvas.style.background = colors.black;
 
-let cameraPosition = Point.zero;
+let cameraPosition = new Point(blockSize / 2, -displayHeight / 5);
 let cameraZoom = 1;
 
 let mousePosition = Point.empty;
