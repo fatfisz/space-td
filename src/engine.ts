@@ -2,6 +2,7 @@ import { initDisplay, updateDisplay } from 'display';
 import { initGrid } from 'grid';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
+import { initMenu } from 'menu';
 import { initObjects } from 'objects';
 
 export function initEngine() {
@@ -14,12 +15,14 @@ export function initEngine() {
     `;
     document.head.append(style);
   }
+  document.body.style.background = '#49f';
 
   initGui();
   initDisplay();
   initObjects();
   initGround();
   initGrid();
+  initMenu();
 }
 
 export function engineTick() {

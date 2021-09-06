@@ -9,3 +9,7 @@ export const minZoom = 0.5;
 export const zoomStep = (maxZoom - minZoom) / 8;
 
 export const blockSize = 24;
+
+export const menuHeight = 100;
+
+export const lineHeightOffset = 1;
