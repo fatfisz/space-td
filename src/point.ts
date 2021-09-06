@@ -35,6 +35,10 @@ export class Point {
     return isNaN(this.x) || isNaN(this.y);
   }
 
+  within(x: number, y: number, width: number, height: number) {
+    return this.x >= x && this.x <= x + width && this.y >= y && this.y <= y + height;
+  }
+
   static zero = new Point(0, 0);
 
   static empty = new Point(NaN, NaN);

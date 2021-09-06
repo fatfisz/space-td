@@ -15,7 +15,7 @@ import { useGuiFolder } from 'gui';
 import { drawMenu, getMenuItemFromMouse, menuItemClick } from 'menu';
 import { MenuItem } from 'menuItems';
 import { getObjectFromCanvas, objectClick } from 'objects';
-import { GameObject } from 'objectTypes';
+import { ForegroundObject } from 'objectTypes';
 import { Point } from 'point';
 
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
@@ -29,7 +29,7 @@ let canvasPosition = Point.empty;
 let menuItem: MenuItem | undefined = undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
-let objectAtMouseDown: GameObject | undefined = undefined;
+let objectAtMouseDown: ForegroundObject | undefined = undefined;
 let menuItemAtMouseDown: MenuItem | undefined = undefined;
 let dragging = false;
 
@@ -44,12 +44,15 @@ export function updateDisplay() {
   clearCanvas();
   setTransform();
   drawDrawables(context, {
+    position: canvasPosition,
     x: canvasPosition.x,
     y: canvasPosition.y,
     x1: cameraPosition.x - (displayWidth / 2 + 1) / cameraZoom,
     y1: cameraPosition.y - (displayHeight / 2 + 1) / cameraZoom,
     x2: cameraPosition.x + (displayWidth / 2 + 1) / cameraZoom,
     y2: cameraPosition.y + (displayHeight / 2 - menuHeight + 1) / cameraZoom,
+    width: (displayWidth + 2) / cameraZoom,
+    height: (displayHeight - menuHeight + 2) / cameraZoom,
   });
   resetTransform();
   drawMenu(context, menuItem);
@@ -81,7 +84,7 @@ function initMouse() {
       dragging = true;
     }
     if (dragging) {
-      cameraPosition = cameraFromCanvas(canvasAtMouseDownPosition);
+      cameraPosition = getCameraFromCanvas(canvasAtMouseDownPosition);
     }
   });
 
@@ -142,7 +145,7 @@ function updateMouseFromEvent({ clientX, clientY } = { clientX: NaN, clientY: Na
 
 function updateZoomFromEvent({ deltaY }: { deltaY: number }) {
   cameraZoom = Math.max(minZoom, Math.min(maxZoom, cameraZoom - Math.sign(deltaY) * zoomStep));
-  cameraPosition = cameraFromCanvas(canvasPosition);
+  cameraPosition = getCameraFromCanvas(canvasPosition);
   // Adjust so that the transform is always an integer
   cameraPosition = new Point(
     Math.round(cameraPosition.x * cameraZoom) / cameraZoom,
@@ -150,7 +153,7 @@ function updateZoomFromEvent({ deltaY }: { deltaY: number }) {
   );
 }
 
-function cameraFromCanvas(canvasPosition: Point) {
+function getCameraFromCanvas(canvasPosition: Point) {
   return canvasPosition.sub(
     mousePosition.sub(new Point(displayWidth / 2, displayHeight / 2)).mul(1 / cameraZoom),
   );

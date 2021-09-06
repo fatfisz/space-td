@@ -14,12 +14,14 @@ export const blockSize = 24;
 
 export const padding = 8;
 
-export const tabHeight = 24;
+export const menuLabelHeight = 24;
 
-export const menuOptionHeight = 48;
+export const menuOptionWidth = 64;
 
-export const menuHeight = tabHeight + padding + menuOptionHeight + padding;
+export const menuOptionHeight = menuLabelHeight + blockSize + padding;
+
+export const menuHeight = menuLabelHeight + padding + menuOptionHeight + padding;
 
 export const menuTop = displayHeight - menuHeight;
 
-export const lineHeightOffset = 1;
+export const verticalTextOffset = 1;

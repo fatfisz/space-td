@@ -1,12 +1,17 @@
+import { Point } from 'point';
+
 type Priority = typeof priorityOrder[number];
 
 interface DisplayState {
+  position: Point;
   x: number;
   y: number;
   x1: number;
   y1: number;
   x2: number;
   y2: number;
+  width: number;
+  height: number;
 }
 
 type Draw = (context: CanvasRenderingContext2D, displayState: DisplayState) => void;
