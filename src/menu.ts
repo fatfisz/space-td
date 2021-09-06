@@ -1,61 +1,65 @@
 import { getCanvas } from 'canvas';
 import { colors } from 'colors';
-import { displaySize, lineHeightOffset, menuHeight } from 'config';
+import {
+  displayHeight,
+  displayWidth,
+  lineHeightOffset,
+  menuHeight,
+  padding,
+  tabHeight,
+} from 'config';
+import { getActiveObject } from 'objects';
 import { Point } from 'point';
 
-type TabName = keyof typeof menuItems.tab;
+type TabName = 'build' | 'info';
 
 export type MenuItem = { type: 'tab'; name: TabName } | { type: 'menu' };
 
-const menuItems = {
-  tab: {
-    build: { type: 'tab', name: 'build' },
-    info: { type: 'tab', name: 'info' },
-  },
-  menu: { type: 'menu' },
-} as const;
-const tabNames = Object.keys(menuItems.tab) as TabName[];
-const tabsWidths = Object.fromEntries(tabNames.map((tabName) => [tabName, 0])) as Record<
-  TabName,
-  number
->;
-const menuTop = displaySize - menuHeight;
-const padding = 8;
-const tabHeight = 20;
+const baseMenuItem = { type: 'menu' } as const;
+const menuTop = displayHeight - menuHeight;
 let activeTabName: TabName = 'build';
 
-export function initMenu() {
-  const [, context] = getCanvas(1000, 1000);
-  context.font = '12px monospace';
-  for (const tabName of tabNames) {
-    tabsWidths[tabName] = Math.round(context.measureText(tabName).width) + padding * 2 - 1;
-  }
-}
+const tabs = {
+  build: initTab('build', (context) => {}),
+  info: initTab('info', (context) => {
+    const activeObject = getActiveObject();
+    context.font = '12px monospace';
+    context.textAlign = 'left';
+    context.textBaseline = 'top';
+    context.fillStyle = colors.white;
+    context.fillText(
+      `Selected object: ${activeObject.type}`,
+      padding,
+      menuTop + tabHeight + padding,
+      displayWidth - 2 * padding,
+    );
+  }),
+};
+const tabNames = Object.keys(tabs) as TabName[];
 
 export function drawMenu(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
+  context.fillStyle = colors.black;
+  context.fillRect(0, menuTop, displayWidth, menuHeight);
   context.strokeStyle = 'white';
-  context.strokeRect(0.5, menuTop + 0.5, displaySize - 1, menuHeight - 1);
+  context.strokeRect(0.5, menuTop + 0.5, displayWidth - 1, menuHeight - 1);
 
   drawTabs(context, menuItem);
+  tabs[activeTabName].draw(context);
 }
 
 export function getMenuItemFromMouse({ x, y }: Point): MenuItem | undefined {
-  if (y < displaySize - menuHeight) {
+  if (y < menuTop) {
     return;
   }
 
   let tabOffset = 0;
   for (const tabName of tabNames) {
-    if (
-      x > tabOffset &&
-      x < tabOffset + tabsWidths[tabName] &&
-      y < displaySize - menuHeight + tabHeight
-    ) {
-      return menuItems.tab[tabName];
+    if (x > tabOffset && x < tabOffset + tabs[tabName].width && y < menuTop + tabHeight) {
+      return tabs[tabName].menuItem;
     }
-    tabOffset += tabsWidths[tabName];
+    tabOffset += tabs[tabName].width;
   }
-  return menuItems.menu;
+  return baseMenuItem;
 }
 
 export function menuItemClick(menuItem: MenuItem) {
@@ -75,7 +79,7 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
     const hover = menuItem?.type === 'tab' && menuItem.name === tabName;
 
     context.fillStyle = getTabFillStyle(active, hover);
-    context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabsWidths[tabName], tabHeight);
+    context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, tabHeight);
 
     context.fillStyle = active ? colors.black : colors.white;
     context.fillText(
@@ -85,17 +89,22 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
     );
 
     context.strokeStyle = colors.white;
-    context.strokeRect(tabOffset + 0.5, menuTop + 0.5, tabsWidths[tabName], tabHeight);
-    tabOffset += tabsWidths[tabName];
+    context.strokeRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, tabHeight);
+    tabOffset += tabs[tabName].width;
   }
 }
 
 function getTabFillStyle(active: boolean, hover: boolean) {
-  if (active) {
-    return colors.white;
-  }
-  if (hover) {
-    return `${colors.white}3`;
-  }
-  return colors.black;
+  return active ? colors.white : hover ? `${colors.white}3` : colors.black;
+}
+
+function initTab(tabName: TabName, draw: (context: CanvasRenderingContext2D) => void) {
+  const [, context] = getCanvas(1000, 1000);
+  context.font = '12px monospace';
+  const width = Math.round(context.measureText(tabName).width) + padding * 2 - 1;
+  return {
+    draw,
+    menuItem: { type: 'tab', name: tabName },
+    width,
+  } as const;
 }

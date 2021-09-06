@@ -2,7 +2,6 @@ import { initDisplay, updateDisplay } from 'display';
 import { initGrid } from 'grid';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
-import { initMenu } from 'menu';
 import { initObjects } from 'objects';
 
 export function initEngine() {
@@ -22,7 +21,6 @@ export function initEngine() {
   initObjects();
   initGround();
   initGrid();
-  initMenu();
 }
 
 export function engineTick() {

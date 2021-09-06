@@ -1,12 +1,21 @@
 import { getCanvas } from 'canvas';
 import { colors } from 'colors';
-import { displaySize, dragThreshold, maxZoom, menuHeight, minZoom, zoomStep } from 'config';
+import {
+  displayHeight,
+  displayWidth,
+  dragThreshold,
+  maxZoom,
+  menuHeight,
+  minZoom,
+  zoomStep,
+} from 'config';
 import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
 import { drawMenu, getMenuItemFromMouse, MenuItem, menuItemClick } from 'menu';
+import { GameObject, getObjectFromCanvas, objectClick } from 'objects';
 import { Point } from 'point';
 
-const [canvas, context] = getCanvas(displaySize, displaySize);
+const [canvas, context] = getCanvas(displayWidth, displayHeight);
 canvas.style.background = colors.black;
 
 let cameraPosition = Point.zero;
@@ -17,6 +26,7 @@ let canvasPosition = Point.empty;
 let menuItem: MenuItem | undefined = undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
+let objectAtMouseDown: GameObject | undefined = undefined;
 let menuItemAtMouseDown: MenuItem | undefined = undefined;
 let dragging = false;
 
@@ -33,10 +43,10 @@ export function updateDisplay() {
   drawDrawables(context, {
     x: canvasPosition.x,
     y: canvasPosition.y,
-    x1: cameraPosition.x - (displaySize / 2 + 1) / cameraZoom,
-    y1: cameraPosition.y - (displaySize / 2 + 1) / cameraZoom,
-    x2: cameraPosition.x + (displaySize / 2 + 1) / cameraZoom,
-    y2: cameraPosition.y + (displaySize / 2 - menuHeight + 1) / cameraZoom,
+    x1: cameraPosition.x - (displayWidth / 2 + 1) / cameraZoom,
+    y1: cameraPosition.y - (displayHeight / 2 + 1) / cameraZoom,
+    x2: cameraPosition.x + (displayWidth / 2 + 1) / cameraZoom,
+    y2: cameraPosition.y + (displayHeight / 2 - menuHeight + 1) / cameraZoom,
   });
   resetTransform();
   drawMenu(context, menuItem);
@@ -98,6 +108,13 @@ function initMouse() {
     if (menuItem && menuItem === menuItemAtMouseDown) {
       menuItemClick(menuItem);
     }
+    if (
+      !dragging &&
+      objectAtMouseDown &&
+      objectAtMouseDown === getObjectFromCanvas(canvasPosition)
+    ) {
+      objectClick(objectAtMouseDown);
+    }
     clearMouseDown();
   });
 
@@ -110,11 +127,11 @@ function initMouse() {
 function updateMouseFromEvent({ clientX, clientY } = { clientX: NaN, clientY: NaN }) {
   const rect = canvas.getBoundingClientRect();
   mousePosition = new Point(
-    (clientX - rect.left) * (displaySize / rect.width),
-    (clientY - rect.top) * (displaySize / rect.height),
+    (clientX - rect.left) * (displayWidth / rect.width),
+    (clientY - rect.top) * (displayHeight / rect.height),
   );
   canvasPosition = mousePosition
-    .sub(new Point(displaySize / 2, displaySize / 2))
+    .sub(new Point(displayWidth / 2, displayHeight / 2))
     .mul(1 / cameraZoom)
     .add(cameraPosition);
   menuItem = getMenuItemFromMouse(mousePosition);
@@ -132,13 +149,14 @@ function updateZoomFromEvent({ deltaY }: { deltaY: number }) {
 
 function cameraFromCanvas(canvasPosition: Point) {
   return canvasPosition.sub(
-    mousePosition.sub(new Point(displaySize / 2, displaySize / 2)).mul(1 / cameraZoom),
+    mousePosition.sub(new Point(displayWidth / 2, displayHeight / 2)).mul(1 / cameraZoom),
   );
 }
 
 function initMouseDown() {
   mouseDownPosition = mousePosition;
   canvasAtMouseDownPosition = canvasPosition;
+  objectAtMouseDown = getObjectFromCanvas(canvasPosition);
 }
 
 function clearMouse() {
@@ -150,12 +168,13 @@ function clearMouse() {
 function clearMouseDown() {
   mouseDownPosition = Point.empty;
   canvasAtMouseDownPosition = Point.empty;
+  objectAtMouseDown = undefined;
   menuItemAtMouseDown = undefined;
   dragging = false;
 }
 
 function clearCanvas() {
-  context.clearRect(0, 0, displaySize, displaySize);
+  context.clearRect(0, 0, displayWidth, displayHeight);
 }
 
 function resetTransform() {
@@ -163,7 +182,7 @@ function resetTransform() {
 }
 
 function setTransform() {
-  context.translate(displaySize / 2, displaySize / 2);
+  context.translate(displayWidth / 2, displayHeight / 2);
   context.scale(cameraZoom, cameraZoom);
   context.translate(-cameraPosition.x, -cameraPosition.y);
 }

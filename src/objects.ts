@@ -2,14 +2,24 @@ import { blockSize, lineHeightOffset } from 'config';
 import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
 import { fps, globalFrame } from 'frame';
+import { menuItemClick } from 'menu';
 import { Point } from 'point';
 
-const objects = new Set<[type: keyof typeof objectTypes, topLeft: Point]>([
-  ['base', new Point(-1, -3)],
-  ['solar', new Point(-2, -1)],
-  ['battery', new Point(-3, -1)],
-  ['turret', new Point(-4, -1)],
+type ObjectType = keyof typeof objectTypes;
+
+export interface GameObject {
+  type: ObjectType;
+  topLeft: Point;
+}
+
+const baseObject: GameObject = { type: 'base', topLeft: new Point(-1, -3) };
+const objects = new Set<GameObject>([
+  baseObject,
+  { type: 'solar', topLeft: new Point(-2, -1) },
+  { type: 'battery', topLeft: new Point(-3, -1) },
+  { type: 'turret', topLeft: new Point(-4, -1) },
 ]);
+let activeObject = baseObject;
 
 export function initObjects() {
   addDrawable('objects', (context, { x, y, x1, y1, x2, y2 }) => {
@@ -20,22 +30,22 @@ export function initObjects() {
     const blockX2 = toBlock(x2);
     const blockY2 = toBlock(y2);
 
-    for (const [type, topLeft] of objects) {
-      if (
-        !isWithin(
-          topLeft.x,
-          topLeft.y,
-          blockX1 - objectTypes[type].width + 1,
-          blockY1 - objectTypes[type].height + 1,
-          blockX2,
-          blockY2,
-        )
-      ) {
+    for (const object of objects) {
+      const { type, topLeft } = object;
+      const objectContainedInCanvas = isWithin(
+        topLeft.x,
+        topLeft.y,
+        blockX1 - objectTypes[type].width + 1,
+        blockY1 - objectTypes[type].height + 1,
+        blockX2,
+        blockY2,
+      );
+      if (!objectContainedInCanvas) {
         continue;
       }
       objectTypes[type].draw(context, topLeft);
 
-      const contained = isWithin(
+      const mouseContainedInObject = isWithin(
         blockX,
         blockY,
         topLeft.x,
@@ -43,11 +53,44 @@ export function initObjects() {
         topLeft.x + objectTypes[type].width - 1,
         topLeft.y + objectTypes[type].height - 1,
       );
-      if (contained) {
+      if (object === activeObject || mouseContainedInObject) {
         drawHover(context, topLeft, objectTypes[type]);
       }
     }
   });
+}
+
+export function getObjectFromCanvas({ x, y }: Point): GameObject | undefined {
+  const blockX = toBlock(x);
+  const blockY = toBlock(y);
+
+  if (blockY >= 0) {
+    return;
+  }
+
+  for (const object of objects) {
+    const { type, topLeft } = object;
+    const contained = isWithin(
+      blockX,
+      blockY,
+      topLeft.x,
+      topLeft.y,
+      topLeft.x + objectTypes[type].width - 1,
+      topLeft.y + objectTypes[type].height - 1,
+    );
+    if (contained) {
+      return object;
+    }
+  }
+}
+
+export function objectClick(object: GameObject) {
+  menuItemClick({ type: 'tab', name: 'info' });
+  activeObject = object;
+}
+
+export function getActiveObject() {
+  return activeObject;
 }
 
 const objectTypes = {
@@ -103,7 +146,7 @@ const objectTypes = {
     width: 1,
     height: 1,
   },
-};
+} as const;
 
 function drawHover(
   context: CanvasRenderingContext2D,
