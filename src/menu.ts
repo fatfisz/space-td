@@ -3,32 +3,32 @@ import { colors } from 'colors';
 import { displaySize, lineHeightOffset, menuHeight } from 'config';
 import { Point } from 'point';
 
-type TabName = keyof typeof tabs;
+type TabName = keyof typeof menuItems.tab;
 
 export type MenuItem = { type: 'tab'; name: TabName } | { type: 'menu' };
 
-const tabs = {
-  build: {
-    width: 0,
+const menuItems = {
+  tab: {
+    build: { type: 'tab', name: 'build' },
+    info: { type: 'tab', name: 'info' },
   },
-  info: {
-    width: 0,
-  },
-};
-
-const tabNames = Object.keys(tabs) as TabName[];
-
+  menu: { type: 'menu' },
+} as const;
+const tabNames = Object.keys(menuItems.tab) as TabName[];
+const tabsWidths = Object.fromEntries(tabNames.map((tabName) => [tabName, 0])) as Record<
+  TabName,
+  number
+>;
 const menuTop = displaySize - menuHeight;
 const padding = 8;
 const tabHeight = 20;
-
 let activeTabName: TabName = 'build';
 
 export function initMenu() {
   const [, context] = getCanvas(1000, 1000);
   context.font = '12px monospace';
   for (const tabName of tabNames) {
-    tabs[tabName].width = Math.round(context.measureText(tabName).width) + padding * 2 - 1;
+    tabsWidths[tabName] = Math.round(context.measureText(tabName).width) + padding * 2 - 1;
   }
 }
 
@@ -48,12 +48,12 @@ export function getMenuItemFromMouse({ x, y }: Point): MenuItem | undefined {
   for (const tabName of tabNames) {
     if (
       x > tabOffset &&
-      x < tabOffset + tabs[tabName].width &&
+      x < tabOffset + tabsWidths[tabName] &&
       y < displaySize - menuHeight + tabHeight
     ) {
       return menuItems.tab[tabName];
     }
-    tabOffset += tabs[tabName].width;
+    tabOffset += tabsWidths[tabName];
   }
   return menuItems.menu;
 }
@@ -63,14 +63,6 @@ export function menuItemClick(menuItem: MenuItem) {
     activeTabName = menuItem.name;
   }
 }
-
-const menuItems = {
-  tab: {
-    build: { type: 'tab', name: 'build' },
-    info: { type: 'tab', name: 'info' },
-  },
-  menu: { type: 'menu' },
-} as const;
 
 function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
   context.font = '12px monospace';
@@ -83,7 +75,7 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
     const hover = menuItem?.type === 'tab' && menuItem.name === tabName;
 
     context.fillStyle = getTabFillStyle(active, hover);
-    context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, tabHeight);
+    context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabsWidths[tabName], tabHeight);
 
     context.fillStyle = active ? colors.black : colors.white;
     context.fillText(
@@ -93,8 +85,8 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
     );
 
     context.strokeStyle = colors.white;
-    context.strokeRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, tabHeight);
-    tabOffset += tabs[tabName].width;
+    context.strokeRect(tabOffset + 0.5, menuTop + 0.5, tabsWidths[tabName], tabHeight);
+    tabOffset += tabsWidths[tabName];
   }
 }
 
