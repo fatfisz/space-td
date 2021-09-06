@@ -20,4 +20,6 @@ export const menuOptionHeight = 48;
 
 export const menuHeight = tabHeight + padding + menuOptionHeight + padding;
 
+export const menuTop = displayHeight - menuHeight;
+
 export const lineHeightOffset = 1;

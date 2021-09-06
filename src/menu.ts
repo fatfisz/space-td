@@ -1,4 +1,3 @@
-import { getCanvas } from 'canvas';
 import { colors } from 'colors';
 import {
   displayHeight,
@@ -8,34 +7,11 @@ import {
   padding,
   tabHeight,
 } from 'config';
-import { getActiveObject } from 'objects';
+import { menuBackground, MenuItem, TabName, tabNames, tabs } from 'menuItems';
 import { Point } from 'point';
 
-type TabName = 'build' | 'info';
-
-export type MenuItem = { type: 'tab'; name: TabName } | { type: 'menu' };
-
-const baseMenuItem = { type: 'menu' } as const;
 const menuTop = displayHeight - menuHeight;
 let activeTabName: TabName = 'build';
-
-const tabs = {
-  build: initTab('build', (context) => {}),
-  info: initTab('info', (context) => {
-    const activeObject = getActiveObject();
-    context.font = '12px monospace';
-    context.textAlign = 'left';
-    context.textBaseline = 'top';
-    context.fillStyle = colors.white;
-    context.fillText(
-      `Selected object: ${activeObject.type}`,
-      padding,
-      menuTop + tabHeight + padding,
-      displayWidth - 2 * padding,
-    );
-  }),
-};
-const tabNames = Object.keys(tabs) as TabName[];
 
 export function drawMenu(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
   context.fillStyle = colors.black;
@@ -59,7 +35,7 @@ export function getMenuItemFromMouse({ x, y }: Point): MenuItem | undefined {
     }
     tabOffset += tabs[tabName].width;
   }
-  return baseMenuItem;
+  return menuBackground;
 }
 
 export function menuItemClick(menuItem: MenuItem) {
@@ -96,15 +72,4 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
 
 function getTabFillStyle(active: boolean, hover: boolean) {
   return active ? colors.white : hover ? `${colors.white}3` : colors.black;
-}
-
-function initTab(tabName: TabName, draw: (context: CanvasRenderingContext2D) => void) {
-  const [, context] = getCanvas(1000, 1000);
-  context.font = '12px monospace';
-  const width = Math.round(context.measureText(tabName).width) + padding * 2 - 1;
-  return {
-    draw,
-    menuItem: { type: 'tab', name: tabName },
-    width,
-  } as const;
 }

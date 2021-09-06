@@ -12,8 +12,10 @@ import {
 } from 'config';
 import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
-import { drawMenu, getMenuItemFromMouse, MenuItem, menuItemClick } from 'menu';
-import { GameObject, getObjectFromCanvas, objectClick } from 'objects';
+import { drawMenu, getMenuItemFromMouse, menuItemClick } from 'menu';
+import { MenuItem } from 'menuItems';
+import { getObjectFromCanvas, objectClick } from 'objects';
+import { GameObject } from 'objectTypes';
 import { Point } from 'point';
 
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
