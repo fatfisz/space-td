@@ -44,7 +44,7 @@ const top = menuTop + menuLabelHeight + padding + 0.5;
 
 export const tabs = {
   build: getTab('build', (context, menuItem) => {
-    for (const [index, [name, { draw }]] of buildableObjectEntries.entries()) {
+    for (const [index, [name, { draw, width }]] of buildableObjectEntries.entries()) {
       const left = padding + (menuOptionWidth + padding) * index + 0.5;
 
       if (menuItem?.type === 'menuBuildObject' && menuItem.name === name) {
@@ -56,12 +56,16 @@ export const tabs = {
       context.strokeRect(left, top, menuOptionWidth, menuOptionHeight);
 
       context.font = '12px monospace';
-      context.textAlign = 'left';
+      context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillStyle = colors.white;
-      context.fillText(name, left + padding, top + menuLabelHeight / 2 + verticalTextOffset);
+      context.fillText(
+        name,
+        left + menuOptionWidth / 2,
+        top + menuLabelHeight / 2 + verticalTextOffset,
+      );
 
-      draw(context, new Point(left + padding, top + menuLabelHeight));
+      draw(context, new Point(left + (menuOptionWidth - width) / 2, top + menuLabelHeight));
     }
   }),
   info: getTab('info', (context) => {
