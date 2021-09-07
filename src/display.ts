@@ -44,8 +44,6 @@ export function updateDisplay() {
   setTransform();
   drawDrawables(context, {
     position: canvasPosition,
-    x: canvasPosition.x,
-    y: canvasPosition.y,
     x1: cameraPosition.x - (displayWidth / 2 + 1) / cameraZoom,
     y1: cameraPosition.y - (displayHeight / 2 + 1) / cameraZoom,
     x2: cameraPosition.x + (displayWidth / 2 + 1) / cameraZoom,

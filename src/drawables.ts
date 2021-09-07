@@ -4,8 +4,6 @@ type Priority = typeof priorityOrder[number];
 
 interface DisplayState {
   position: Point;
-  x: number;
-  y: number;
   x1: number;
   y1: number;
   x2: number;
