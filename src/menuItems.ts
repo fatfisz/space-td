@@ -71,7 +71,7 @@ export const tabs = {
     context.textBaseline = 'top';
     context.fillStyle = colors.white;
     context.fillText(
-      `Selected object: ${activeObject.type}`,
+      `Selected object: ${activeObject}`,
       padding,
       menuTop + menuLabelHeight + padding,
       displayWidth - 2 * padding,

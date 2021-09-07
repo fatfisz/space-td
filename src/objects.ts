@@ -5,22 +5,19 @@ import { menuItemClick } from 'menu';
 import { drawHover, ForegroundObject, foregroundObjects } from 'objectTypes';
 import { Point } from 'point';
 
-const baseObject: ForegroundObject = {
-  type: 'base',
-  topLeft: new Point(-blockSize, -3 * blockSize),
-};
-const objects = new Set<ForegroundObject>([
-  baseObject,
-  { type: 'solar', topLeft: new Point(-2 * blockSize, -blockSize) },
-  { type: 'battery', topLeft: new Point(-3 * blockSize, -blockSize) },
-  { type: 'turret', topLeft: new Point(-4 * blockSize, -blockSize) },
+const baseObjectBlockX = -1;
+const objects = new Map<number, ForegroundObject>([
+  [baseObjectBlockX, 'base'],
+  [-2, 'solar'],
+  [-3, 'battery'],
+  [-4, 'turret'],
 ]);
-let activeObject = baseObject;
+let activeObjectBlockX = baseObjectBlockX;
 
 export function initObjects() {
   addDrawable('objects', (context, { position, x1, y1, width, height }) => {
-    for (const object of objects) {
-      const { type, topLeft } = object;
+    for (const [blockX, type] of objects) {
+      const topLeft = new Point(blockX * blockSize, -foregroundObjects[type].height);
       const objectContainedInCanvas = topLeft.within(
         x1 - foregroundObjects[type].width,
         y1 - foregroundObjects[type].height,
@@ -38,37 +35,30 @@ export function initObjects() {
         foregroundObjects[type].width,
         foregroundObjects[type].height,
       );
-      if (object === activeObject || mouseContainedInObject) {
+      if (blockX === activeObjectBlockX || mouseContainedInObject) {
         drawHover(context, topLeft, foregroundObjects[type]);
       }
     }
   });
 }
 
-export function getObjectFromCanvas({ x, y }: Point): ForegroundObject | undefined {
-  const blockPoint = new Point(toBlock(x), toBlock(y));
-  if (blockPoint.y >= 0) {
+export function getObjectBlockXFromCanvas({ x, y }: Point): number | undefined {
+  const blockX = toBlock(x);
+  const normalizedBlockX = blockX === 0 || blockX === 1 ? -1 : blockX;
+  const object = objects.get(normalizedBlockX);
+  if (!object) {
     return;
   }
-  for (const object of objects) {
-    const { type, topLeft } = object;
-    const contained = blockPoint.within(
-      topLeft.x,
-      topLeft.y,
-      foregroundObjects[type].width,
-      foregroundObjects[type].height,
-    );
-    if (contained) {
-      return object;
-    }
+  if (y <= 0 && y >= -foregroundObjects[object].height) {
+    return normalizedBlockX;
   }
 }
 
-export function objectClick(object: ForegroundObject) {
+export function objectClick(blockX: number) {
   menuItemClick({ type: 'tab', name: 'info' });
-  activeObject = object;
+  activeObjectBlockX = blockX;
 }
 
 export function getActiveObject() {
-  return activeObject;
+  return objects.get(activeObjectBlockX)!;
 }

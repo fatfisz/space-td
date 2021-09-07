@@ -6,10 +6,7 @@ export type BaseObject = 'base';
 
 export type MainObject = keyof typeof mainObjects;
 
-export interface ForegroundObject {
-  type: BaseObject | MainObject;
-  topLeft: Point;
-}
+export type ForegroundObject = BaseObject | MainObject;
 
 export type BuildableObject = keyof typeof buildableObjects;
 

@@ -14,8 +14,7 @@ import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
 import { drawMenu, getMenuItemFromMouse, menuItemClick } from 'menu';
 import { MenuItem } from 'menuItems';
-import { getObjectFromCanvas, objectClick } from 'objects';
-import { ForegroundObject } from 'objectTypes';
+import { getObjectBlockXFromCanvas, objectClick } from 'objects';
 import { Point } from 'point';
 
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
@@ -29,7 +28,7 @@ let canvasPosition = Point.empty;
 let menuItem: MenuItem | undefined = undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
-let objectAtMouseDown: ForegroundObject | undefined = undefined;
+let objectBlockXAtMouseDown: number | undefined = undefined;
 let menuItemAtMouseDown: MenuItem | undefined = undefined;
 let dragging = false;
 
@@ -116,10 +115,10 @@ function initMouse() {
     }
     if (
       !dragging &&
-      objectAtMouseDown &&
-      objectAtMouseDown === getObjectFromCanvas(canvasPosition)
+      typeof objectBlockXAtMouseDown !== 'undefined' &&
+      objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)
     ) {
-      objectClick(objectAtMouseDown);
+      objectClick(objectBlockXAtMouseDown);
     }
     clearMouseDown();
   });
@@ -162,7 +161,7 @@ function getCameraFromCanvas(canvasPosition: Point) {
 function initMouseDown() {
   mouseDownPosition = mousePosition;
   canvasAtMouseDownPosition = canvasPosition;
-  objectAtMouseDown = getObjectFromCanvas(canvasPosition);
+  objectBlockXAtMouseDown = getObjectBlockXFromCanvas(canvasPosition);
 }
 
 function clearMouse() {
@@ -174,7 +173,7 @@ function clearMouse() {
 function clearMouseDown() {
   mouseDownPosition = Point.empty;
   canvasAtMouseDownPosition = Point.empty;
-  objectAtMouseDown = undefined;
+  objectBlockXAtMouseDown = undefined;
   menuItemAtMouseDown = undefined;
   dragging = false;
 }
