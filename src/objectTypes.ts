@@ -12,13 +12,10 @@ export type BuildableObject = keyof typeof buildableObjects;
 
 const baseObject = {
   draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
-    context.fillStyle = 'lightblue';
-    context.fillRect(x, y, blockSize * 3, blockSize * 3);
-    context.fillStyle = 'white';
-    context.font = '16px monospace';
+    context.font = '60px monospace';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText('💩', x + 1.5 * blockSize, y + 1.5 * blockSize + verticalTextOffset);
+    context.fillText('🗼', x + 1.5 * blockSize, y + 1.5 * blockSize + verticalTextOffset * 3);
   },
   width: 3 * blockSize,
   height: 3 * blockSize,
@@ -27,10 +24,7 @@ const baseObject = {
 export const mainObjects = {
   solar: {
     draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
-      context.fillStyle = 'lightblue';
-      context.fillRect(x, y, blockSize, blockSize);
-      context.fillStyle = 'white';
-      context.font = '16px monospace';
+      context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🌞', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
@@ -40,10 +34,7 @@ export const mainObjects = {
   },
   battery: {
     draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
-      context.fillStyle = 'lightblue';
-      context.fillRect(x, y, blockSize, blockSize);
-      context.fillStyle = 'white';
-      context.font = '16px monospace';
+      context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔋', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
@@ -53,10 +44,7 @@ export const mainObjects = {
   },
   turret: {
     draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
-      context.fillStyle = 'salmon';
-      context.fillRect(x, y, blockSize, blockSize);
-      context.fillStyle = 'white';
-      context.font = '16px monospace';
+      context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔫', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
