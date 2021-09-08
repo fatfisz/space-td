@@ -25,3 +25,7 @@ export const menuHeight = menuLabelHeight + padding + menuOptionHeight + padding
 export const menuTop = displayHeight - menuHeight;
 
 export const verticalTextOffset = 1;
+
+export const baseBlockX = -1;
+
+export const baseSize = 3;

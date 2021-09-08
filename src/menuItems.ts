@@ -9,7 +9,7 @@ import {
   padding,
   verticalTextOffset,
 } from 'config';
-import { getActiveObject } from 'objects';
+import { getActiveBuildableObject, getActiveObject } from 'objects';
 import { BuildableObject, buildableObjects } from 'objectTypes';
 import { Point } from 'point';
 
@@ -46,19 +46,19 @@ export const tabs = {
   build: getTab('build', (context, menuItem) => {
     for (const [index, [name, { draw, width }]] of buildableObjectEntries.entries()) {
       const left = padding + (menuOptionWidth + padding) * index + 0.5;
+      const active = name === getActiveBuildableObject();
+      const hover = menuItem?.type === 'menuBuildObject' && menuItem.name === name;
 
-      if (menuItem?.type === 'menuBuildObject' && menuItem.name === name) {
-        context.fillStyle = `${colors.white}3`;
-        context.fillRect(left, top, menuOptionWidth, menuOptionHeight);
-      }
+      context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
+      context.fillRect(left, top, menuOptionWidth, menuOptionHeight);
 
       context.strokeStyle = colors.white;
       context.strokeRect(left, top, menuOptionWidth, menuOptionHeight);
 
+      context.fillStyle = active ? colors.black : colors.white;
       context.font = '12px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.fillStyle = colors.white;
       context.fillText(
         name,
         left + menuOptionWidth / 2,
@@ -75,7 +75,7 @@ export const tabs = {
     context.textBaseline = 'top';
     context.fillStyle = colors.white;
     context.fillText(
-      `Selected object: ${activeObject}`,
+      activeObject ? `Selected object: ${activeObject}` : 'select an object to see more details',
       padding,
       menuTop + menuLabelHeight + padding,
       displayWidth - 2 * padding,

@@ -16,6 +16,7 @@ import {
   tabNames,
   tabs,
 } from 'menuItems';
+import { setActiveBuildableObject } from 'objects';
 import { Point } from 'point';
 
 const menuTop = displayHeight - menuHeight;
@@ -24,7 +25,7 @@ let activeTabName: TabName = 'build';
 export function drawMenu(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
   context.fillStyle = colors.black;
   context.fillRect(0, menuTop, displayWidth, menuHeight);
-  context.strokeStyle = 'white';
+  context.strokeStyle = colors.white;
   context.strokeRect(0.5, menuTop + 0.5, displayWidth - 1, menuHeight - 1);
 
   drawTabs(context, menuItem);
@@ -45,7 +46,7 @@ export function menuItemClick(menuItem: MenuItem) {
     activeTabName = menuItem.name;
   }
   if (menuItem.type === 'menuBuildObject') {
-    console.log(menuItem.name);
+    setActiveBuildableObject(menuItem.name);
   }
 }
 
@@ -59,7 +60,7 @@ function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefi
     const active = tabName === activeTabName;
     const hover = menuItem?.type === 'tab' && menuItem.name === tabName;
 
-    context.fillStyle = active ? colors.white : hover ? `${colors.white}3` : colors.black;
+    context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
     context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, menuLabelHeight);
 
     context.fillStyle = active ? colors.black : colors.white;

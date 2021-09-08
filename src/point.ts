@@ -36,7 +36,7 @@ export class Point {
   }
 
   within(x: number, y: number, width: number, height: number) {
-    return this.x >= x && this.x <= x + width && this.y >= y && this.y <= y + height;
+    return this.x >= x && this.x < x + width && this.y >= y && this.y < y + height;
   }
 
   static zero = new Point(0, 0);

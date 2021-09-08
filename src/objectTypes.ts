@@ -1,3 +1,4 @@
+import { colors } from 'colors';
 import { blockSize, verticalTextOffset } from 'config';
 import { fps, globalFrame } from 'frame';
 import { Point } from 'point';
@@ -66,7 +67,7 @@ export function drawHover(
   { x, y }: Point,
   { width, height }: { width: number; height: number },
 ) {
-  context.strokeStyle = 'white';
+  context.strokeStyle = colors.white;
   context.setLineDash([5, 5]);
   context.lineDashOffset = Math.floor((globalFrame / fps) * -20);
   context.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);

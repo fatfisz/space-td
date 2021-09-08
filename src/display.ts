@@ -25,11 +25,11 @@ let cameraZoom = 1;
 
 let mousePosition = Point.empty;
 let canvasPosition = Point.empty;
-let menuItem: MenuItem | undefined = undefined;
+let menuItem: MenuItem | undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
-let objectBlockXAtMouseDown: number | undefined = undefined;
-let menuItemAtMouseDown: MenuItem | undefined = undefined;
+let objectBlockXAtMouseDown: number | undefined;
+let menuItemAtMouseDown: MenuItem | undefined;
 let dragging = false;
 
 export function initDisplay() {
@@ -110,12 +110,7 @@ function initMouse() {
     updateMouseFromEvent(event);
     if (menuItem && menuItem === menuItemAtMouseDown) {
       menuItemClick(menuItem);
-    }
-    if (
-      !dragging &&
-      typeof objectBlockXAtMouseDown !== 'undefined' &&
-      objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)
-    ) {
+    } else if (!dragging && objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)) {
       objectClick(objectBlockXAtMouseDown);
     }
     clearMouseDown();

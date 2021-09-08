@@ -1,5 +1,4 @@
 import { initDisplay, updateDisplay } from 'display';
-import { initGrid } from 'grid';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
 import { initObjects } from 'objects';
@@ -20,7 +19,6 @@ export function initEngine() {
   initDisplay();
   initObjects();
   initGround();
-  initGrid();
 }
 
 export function engineTick() {
