@@ -3,6 +3,9 @@
 module.exports = {
   root: true,
   extends: 'fatfisz',
+  rules: {
+    'no-console': 'warn',
+  },
   overrides: [
     {
       files: '**/*.js',
