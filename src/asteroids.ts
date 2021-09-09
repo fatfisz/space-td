@@ -1,5 +1,5 @@
 import { colors } from 'colors';
-import { minVisibleY } from 'config';
+import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
 import { randomBetween } from 'math';
 import { getObjectsRangeWithOffset } from 'objects';
@@ -17,7 +17,7 @@ interface Asteroid {
 
 const maxAsteroids = 80;
 const minMass = 1;
-const maxMass = 4;
+const maxMass = 3;
 const maxAngle = Math.PI / 6;
 const minSpeed = 1;
 const maxSpeed = 2;
@@ -41,9 +41,9 @@ function maybeAddAsteroid() {
   if (Math.random() > asteroidChance || asteroids.size >= maxAsteroids) {
     return;
   }
-  const mass = randomBetween(minMass, maxMass);
+  const mass = Math.floor(randomBetween(minMass, maxMass + 1));
   const angle = randomBetween(-maxAngle, maxAngle);
-  const radius = Math.round(1.5 ** (mass + 5));
+  const radius = (blockSize * mass) / 2;
   const asteroid = {
     mass,
     position: new Point(
