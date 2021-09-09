@@ -1,5 +1,5 @@
 import { colors } from 'colors';
-import { baseBlockX, baseSize, blockSize } from 'config';
+import { baseBlockX, baseSize, blockSize, maxOffsetX } from 'config';
 import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
 import { menuItemClick } from 'menu';
@@ -7,6 +7,8 @@ import { BuildableObject, drawHover, ForegroundObject, foregroundObjects } from 
 import { Point } from 'point';
 
 const objects = new Map<number, ForegroundObject>([[baseBlockX, 'base']]);
+let minBlockX = baseBlockX;
+let maxBlockX = baseBlockX + 2;
 let activeObjectBlockX: number | undefined;
 let activeBuildableObject: BuildableObject | undefined;
 
@@ -74,7 +76,8 @@ export function objectClick(blockX: number | undefined) {
 }
 
 function addObject(blockX: number, buildableObject: BuildableObject) {
-  // TODO: check materials
+  minBlockX = Math.min(blockX, minBlockX);
+  maxBlockX = Math.min(blockX, maxBlockX);
   objects.set(blockX, buildableObject);
 }
 
@@ -88,4 +91,8 @@ export function getActiveBuildableObject() {
 
 export function setActiveBuildableObject(buildableObject: BuildableObject) {
   activeBuildableObject = buildableObject;
+}
+
+export function getObjectsRangeWithOffset(): [min: number, max: number] {
+  return [minBlockX * blockSize - maxOffsetX, (maxBlockX + 1) * blockSize - 1 + maxOffsetX];
 }

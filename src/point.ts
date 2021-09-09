@@ -39,6 +39,13 @@ export class Point {
     return this.x >= x && this.x < x + width && this.y >= y && this.y < y + height;
   }
 
+  ensureWithin(x: number, y: number, width: number, height: number) {
+    return new Point(
+      Math.min(x + width, Math.max(x, this.x)),
+      Math.min(y + height, Math.max(y, this.y)),
+    );
+  }
+
   static zero = new Point(0, 0);
 
   static empty = new Point(NaN, NaN);

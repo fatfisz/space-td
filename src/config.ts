@@ -2,13 +2,19 @@ export const displayWidth = 500;
 
 export const displayHeight = 800;
 
+export const minVisibleY = -1200;
+
+export const maxOffsetX = 800;
+
+export const maxVisibleY = 1200;
+
 export const dragThreshold = 5;
 
 export const maxZoom = 1.5;
 
 export const minZoom = 0.5;
 
-export const zoomStep = (maxZoom - minZoom) / 8;
+export const zoomStep = (maxZoom - minZoom) / 12;
 
 export const blockSize = 24;
 
