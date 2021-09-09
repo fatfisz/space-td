@@ -50,3 +50,20 @@ export class Point {
 
   static empty = new Point(NaN, NaN);
 }
+
+export class HashedPoint extends Point {
+  private static cache = new Map<string, HashedPoint>();
+
+  constructor(x: number, y: number) {
+    super(x, y);
+    const hash = this.toHash();
+    if (!HashedPoint.cache.has(hash)) {
+      HashedPoint.cache.set(hash, this);
+    }
+    return HashedPoint.cache.get(hash)!;
+  }
+
+  private toHash() {
+    return `${this.x},${this.y}`;
+  }
+}
