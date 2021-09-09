@@ -4,7 +4,7 @@ export const displayHeight = 800;
 
 export const minVisibleY = -1200;
 
-export const maxOffsetX = 800;
+export const maxOffsetX = 500;
 
 export const maxVisibleY = 1200;
 
