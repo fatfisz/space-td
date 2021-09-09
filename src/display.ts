@@ -111,6 +111,7 @@ function initMouse() {
   document.addEventListener('mouseup', (event) => {
     updateMouseFromEvent(event);
     if (menuItem && menuItem === menuItemAtMouseDown) {
+      objectClick(undefined);
       menuItemClick(menuItem);
     } else if (!dragging && objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)) {
       objectClick(objectBlockXAtMouseDown);
