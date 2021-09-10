@@ -35,6 +35,7 @@ const maxRotation = 0.04;
 const asteroidChance = 0.05;
 const asteroids = new Set<Asteroid>();
 const particleColors = [
+  colors.grey100,
   colors.grey200,
   colors.grey300,
   colors.grey400,
@@ -130,10 +131,10 @@ function addAsteroid(
   asteroids.add(asteroid);
 }
 
-function destroyAsteroid(asteroid: Asteroid, split = true) {
+function destroyAsteroid(asteroid: Asteroid) {
   deleteAsteroid(asteroid);
   addParticles(asteroid.position, asteroid.radius, particleColors);
-  if (asteroid.mass === 1 || !split) {
+  if (asteroid.mass === 1) {
     return;
   }
   const angle = asteroid.angle;
@@ -165,11 +166,11 @@ function checkAsteroidForCollisions(asteroid: Asteroid) {
   const collidingObject = getCollidingObject(asteroid.computedVertices);
   if (collidingObject) {
     collidingObject.health -= getAsteroidDamage(asteroid);
-    destroyAsteroid(asteroid, false);
+    destroyAsteroid(asteroid);
     return;
   }
   if (asteroid.computedVertices.some(({ y }) => y > 0)) {
-    destroyAsteroid(asteroid, false);
+    destroyAsteroid(asteroid);
   }
 }
 

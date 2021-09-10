@@ -12,7 +12,7 @@ interface Particle {
 const particles = new Set<Particle>();
 const size = 3;
 const maxLife = 60;
-const density = 0.02;
+const density = 0.04;
 const speed = 1;
 
 let maxParticles = 0;
@@ -41,7 +41,7 @@ export function updateParticles() {
 }
 
 export function addParticles(mid: Point, radius: number, colors: string[], highDensity = false) {
-  const particleCount = radius ** 2 * (highDensity ? density * 4 : density);
+  const particleCount = radius ** 2 * (highDensity ? density * 2 : density);
   for (let index = 0; index < particleCount; index += 1) {
     const angle = randomBetween(0, Math.PI * 2);
     const offsetPoint = new Point(Math.sin(angle), Math.cos(angle));

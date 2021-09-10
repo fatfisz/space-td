@@ -21,7 +21,6 @@ let maxBlockX = baseBlockX + 2;
 let activeObjectBlockX: number | undefined;
 let activeBuildableObjectName: BuildableObjectName | undefined;
 const particleColors = [
-  colors.red,
   colors.orange200,
   colors.orange300,
   colors.orange400,
