@@ -3,6 +3,7 @@ import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
 import { randomBetween } from 'math';
 import { getObjectsRangeWithOffset } from 'objects';
+import { addParticles } from 'particles';
 import { Point } from 'point';
 
 export interface Asteroid {
@@ -30,6 +31,7 @@ const minRotation = 0.01;
 const maxRotation = 0.04;
 const asteroidChance = 0.05;
 const asteroids = new Set<Asteroid>();
+const particleColors = ['#444', '#666', '#888', '#aaa', '#ccc'];
 
 export function updateAsteroids() {
   maybeAddAsteroid();
@@ -41,7 +43,7 @@ export function updateAsteroids() {
     }
     asteroid.position = asteroid.position.add(asteroid.dPosition);
     asteroid.r += asteroid.dr;
-    maybeDeleteAsteroid(asteroid);
+    maybeDestroyAsteroid(asteroid);
   }
 }
 
@@ -61,7 +63,7 @@ function addAsteroid(
     spawnY,
   ),
 ) {
-  const radius = (blockSize * mass) / 2;
+  const radius = getAsteroidRadius(mass);
   const asteroid = {
     mass,
     angle,
@@ -118,6 +120,7 @@ function addAsteroid(
 
 function destroyAsteroid(asteroid: Asteroid) {
   deleteAsteroid(asteroid);
+  addParticles(asteroid.position, getAsteroidRadius(asteroid.mass), particleColors);
   if (asteroid.mass === 1) {
     return;
   }
@@ -136,16 +139,20 @@ function destroyAsteroid(asteroid: Asteroid) {
   );
 }
 
-function maybeDeleteAsteroid(asteroid: Asteroid) {
+function maybeDestroyAsteroid(asteroid: Asteroid) {
   if (asteroid.position.y < 0) {
     return;
   }
-  deleteAsteroid(asteroid);
+  destroyAsteroid(asteroid);
 }
 
 function deleteAsteroid(asteroid: Asteroid) {
   asteroids.delete(asteroid);
   removeDrawable(asteroid.drawableHandle);
+}
+
+function getAsteroidRadius(mass: number) {
+  return (blockSize * mass) / 2;
 }
 
 function getAsteroidVertexOffsets(mass: number) {

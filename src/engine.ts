@@ -3,6 +3,7 @@ import { initDisplay, updateDisplay } from 'display';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
 import { initObjects, updateObjects } from 'objects';
+import { initParticles, updateParticles } from 'particles';
 
 export function initEngine() {
   if (process.env.NODE_ENV !== 'production') {
@@ -20,9 +21,11 @@ export function initEngine() {
   initDisplay();
   initObjects();
   initGround();
+  initParticles();
 }
 
 export function engineTick() {
+  updateParticles();
   updateAsteroids();
   updateObjects();
   updateDisplay();
