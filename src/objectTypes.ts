@@ -32,8 +32,11 @@ type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
     state: ForegroundObjectState[Name],
     context: unknown,
   ) => Partial<ForegroundObjectState[Name]>;
+  midX: number;
   width: number;
   height: number;
+  health: number;
+  maxHealth: number;
 } & ForegroundObjectState[Name];
 
 export type ForegroundObject =
@@ -49,6 +52,7 @@ const powerToDamageMultiplier = 0.02;
 
 const baseObjectGetter = getForegroundObjectGetter(
   'base',
+  10,
   (context, { x, y }) => {
     context.font = '60px monospace';
     context.textAlign = 'center';
@@ -57,15 +61,17 @@ const baseObjectGetter = getForegroundObjectGetter(
   },
   () => ({}),
   () => ({}),
-  {
+  (blockX) => ({
+    midX: (blockX + 1.5) * blockSize,
     width: 3 * blockSize,
     height: 3 * blockSize,
-  },
+  }),
 );
 
 export const mainObjects = {
   solar: getForegroundObjectGetter(
     'solar',
+    2,
     (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
@@ -77,6 +83,7 @@ export const mainObjects = {
   ),
   battery: getForegroundObjectGetter(
     'battery',
+    4,
     (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
@@ -88,6 +95,7 @@ export const mainObjects = {
   ),
   turret: getForegroundObjectGetter(
     'turret',
+    6,
     (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
@@ -132,13 +140,14 @@ export function drawHover(
 
 function getForegroundObjectGetter<Name extends ForegroundObjectName>(
   name: Name,
+  maxHealth: number,
   draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void,
   getInitialState: (blockX: number) => ForegroundObjectState[Name],
   reduceState: (
     state: ForegroundObjectState[Name],
     context: unknown,
   ) => Partial<ForegroundObjectState[Name]>,
-  extra?: Partial<ForegroundObjectWithState<Name>>,
+  getExtra?: (blockX: number) => Partial<ForegroundObjectWithState<Name>>,
 ) {
   return Object.assign(
     (blockX: number) => ({
@@ -146,9 +155,12 @@ function getForegroundObjectGetter<Name extends ForegroundObjectName>(
       ...getInitialState(blockX),
       draw,
       reduceState,
+      midX: (blockX + 0.5) * blockSize,
       width: blockSize,
       height: blockSize,
-      ...extra,
+      health: maxHealth,
+      maxHealth,
+      ...getExtra?.(blockX),
     }),
     { draw, width: blockSize },
   );

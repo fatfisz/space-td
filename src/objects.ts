@@ -2,6 +2,7 @@ import { colors } from 'colors';
 import { baseBlockX, baseSize, blockSize, maxOffsetX } from 'config';
 import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
+import { initHealthBars } from 'healthBars';
 import { menuItemClick } from 'menu';
 import {
   BuildableObjectName,
@@ -63,6 +64,15 @@ export function initObjects() {
     }
     context.lineWidth = 1;
   });
+
+  initHealthBars(
+    () => objects.values(),
+    ({ midX, width, height }) => ({
+      midX,
+      width: width - 2,
+      y: -height,
+    }),
+  );
 }
 
 export function updateObjects() {

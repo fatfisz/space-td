@@ -1,6 +1,7 @@
 import { colors } from 'colors';
 import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
+import { initHealthBars } from 'healthBars';
 import { randomBetween } from 'math';
 import { getObjectsRangeWithOffset } from 'objects';
 import { addParticles } from 'particles';
@@ -31,7 +32,27 @@ const minRotation = 0.01;
 const maxRotation = 0.04;
 const asteroidChance = 0.05;
 const asteroids = new Set<Asteroid>();
-const particleColors = ['#444', '#666', '#888', '#aaa', '#ccc'];
+const particleColors = [
+  colors.grey200,
+  colors.grey300,
+  colors.grey400,
+  colors.grey500,
+  colors.grey600,
+];
+
+export function initAsteroids() {
+  initHealthBars(
+    () => asteroids,
+    ({ mass, position }) => {
+      const radius = getAsteroidRadius(mass);
+      return {
+        midX: position.x,
+        y: position.y - radius,
+        width: 2 * radius,
+      };
+    },
+  );
+}
 
 export function updateAsteroids() {
   maybeAddAsteroid();
@@ -81,8 +102,8 @@ function addAsteroid(
         return;
       }
 
-      context.fillStyle = colors.black;
-      context.strokeStyle = colors.white;
+      context.fillStyle = colors.grey500;
+      context.strokeStyle = colors.grey300;
       context.beginPath();
       for (let index = 0; index < asteroid.vertexOffsets.length; index += 1) {
         const offset = asteroid.vertexOffsets[index] * radius;
@@ -98,20 +119,6 @@ function addAsteroid(
       context.closePath();
       context.fill();
       context.stroke();
-
-      if (asteroid.health === asteroid.maxHealth) {
-        return;
-      }
-      context.lineWidth = 2;
-      context.strokeStyle = colors.green;
-      context.beginPath();
-      context.moveTo(asteroid.position.x - radius, asteroid.position.y - radius);
-      context.lineTo(
-        asteroid.position.x - radius + (2 * radius * asteroid.health) / asteroid.maxHealth,
-        asteroid.position.y - radius,
-      );
-      context.stroke();
-      context.lineWidth = 1;
     }),
     vertexOffsets: getAsteroidVertexOffsets(mass),
   };

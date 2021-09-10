@@ -1,4 +1,4 @@
-import { updateAsteroids } from 'asteroids';
+import { initAsteroids, updateAsteroids } from 'asteroids';
 import { initDisplay, updateDisplay } from 'display';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
@@ -19,6 +19,7 @@ export function initEngine() {
 
   initGui();
   initDisplay();
+  initAsteroids();
   initObjects();
   initGround();
   initParticles();
