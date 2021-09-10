@@ -5,22 +5,26 @@ import { randomBetween } from 'math';
 import { getObjectsRangeWithOffset } from 'objects';
 import { Point } from 'point';
 
-interface Asteroid {
+export interface Asteroid {
   mass: number;
+  angle: number;
+  speed: number;
   position: Point;
-  r: number;
   dPosition: Point;
+  r: number;
   dr: number;
+  health: number;
+  maxHealth: number;
   drawableHandle: number;
   vertexOffsets: number[];
 }
 
 const maxAsteroids = 80;
 const minMass = 1;
-const maxMass = 3;
+const maxMass = 4;
 const maxAngle = Math.PI / 6;
-const minSpeed = 1;
-const maxSpeed = 2;
+const minSpeed = 0.5;
+const maxSpeed = 1.5;
 const spawnY = minVisibleY - 100;
 const minRotation = 0.01;
 const maxRotation = 0.04;
@@ -31,6 +35,10 @@ export function updateAsteroids() {
   maybeAddAsteroid();
 
   for (const asteroid of asteroids) {
+    if (asteroid.health <= 0) {
+      destroyAsteroid(asteroid);
+      continue;
+    }
     asteroid.position = asteroid.position.add(asteroid.dPosition);
     asteroid.r += asteroid.dr;
     maybeDeleteAsteroid(asteroid);
@@ -41,20 +49,29 @@ function maybeAddAsteroid() {
   if (Math.random() > asteroidChance || asteroids.size >= maxAsteroids) {
     return;
   }
-  const mass = Math.floor(randomBetween(minMass, maxMass + 1));
-  const angle = randomBetween(-maxAngle, maxAngle);
+  addAsteroid();
+}
+
+function addAsteroid(
+  mass = Math.floor(randomBetween(minMass, maxMass + 1)),
+  angle = randomBetween(-maxAngle, maxAngle),
+  speed = randomBetween(minSpeed, maxSpeed) / mass,
+  position = new Point(
+    randomBetween(...getObjectsRangeWithOffset()) + Math.tan(angle) * spawnY,
+    spawnY,
+  ),
+) {
   const radius = (blockSize * mass) / 2;
   const asteroid = {
     mass,
-    position: new Point(
-      randomBetween(...getObjectsRangeWithOffset()) + Math.tan(angle) * spawnY,
-      spawnY,
-    ),
+    angle,
+    speed,
+    position,
+    dPosition: new Point(Math.sin(angle), Math.cos(angle)).mul(speed),
     r: 0,
-    dPosition: new Point(Math.sin(angle), Math.cos(angle)).mul(
-      randomBetween(minSpeed, maxSpeed) / mass,
-    ),
-    dr: Math.sign(Math.random() - 0.5) * randomBetween(minRotation, maxRotation),
+    dr: (Math.sign(Math.random() - 0.5) * randomBetween(minRotation, maxRotation)) / mass,
+    health: 2 ** mass,
+    maxHealth: 2 ** mass,
     drawableHandle: addDrawable('objects', (context, { x1, y1, width, height }) => {
       if (
         !asteroid.position.within(x1 - radius, y1 - radius, width + radius * 2, height + radius * 2)
@@ -79,16 +96,54 @@ function maybeAddAsteroid() {
       context.closePath();
       context.fill();
       context.stroke();
+
+      if (asteroid.health === asteroid.maxHealth) {
+        return;
+      }
+      context.lineWidth = 2;
+      context.strokeStyle = colors.green;
+      context.beginPath();
+      context.moveTo(asteroid.position.x - radius, asteroid.position.y - radius);
+      context.lineTo(
+        asteroid.position.x - radius + (2 * radius * asteroid.health) / asteroid.maxHealth,
+        asteroid.position.y - radius,
+      );
+      context.stroke();
+      context.lineWidth = 1;
     }),
     vertexOffsets: getAsteroidVertexOffsets(mass),
   };
   asteroids.add(asteroid);
 }
 
+function destroyAsteroid(asteroid: Asteroid) {
+  deleteAsteroid(asteroid);
+  if (asteroid.mass === 1) {
+    return;
+  }
+  const angle = asteroid.angle;
+  addAsteroid(
+    asteroid.mass - 1,
+    angle - Math.PI / 12,
+    (asteroid.speed * asteroid.mass) / (asteroid.mass - 1),
+    asteroid.position,
+  );
+  addAsteroid(
+    asteroid.mass - 1,
+    angle + Math.PI / 12,
+    (asteroid.speed * asteroid.mass) / (asteroid.mass - 1),
+    asteroid.position,
+  );
+}
+
 function maybeDeleteAsteroid(asteroid: Asteroid) {
   if (asteroid.position.y < 0) {
     return;
   }
+  deleteAsteroid(asteroid);
+}
+
+function deleteAsteroid(asteroid: Asteroid) {
   asteroids.delete(asteroid);
   removeDrawable(asteroid.drawableHandle);
 }
@@ -100,4 +155,24 @@ function getAsteroidVertexOffsets(mass: number) {
     offsets.push(randomBetween(0.5, 1));
   }
   return offsets;
+}
+
+export function getNearestAsteroids(point: Point, count: number, maxDistance: number) {
+  const nearestAsteroids: [distance: number, asteroid: Asteroid][] = [];
+  for (const asteroid of asteroids) {
+    const distance = asteroid.position.distance(point);
+    if (distance > maxDistance) {
+      continue;
+    }
+    const index = nearestAsteroids.findIndex(([prevDistance]) => distance < prevDistance);
+    if (index >= 0) {
+      nearestAsteroids.splice(index, 0, [distance, asteroid]);
+      if (nearestAsteroids.length > count) {
+        nearestAsteroids.pop();
+      }
+    } else if (nearestAsteroids.length < count) {
+      nearestAsteroids.push([distance, asteroid]);
+    }
+  }
+  return nearestAsteroids.map(([, asteroid]) => asteroid);
 }

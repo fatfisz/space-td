@@ -1,62 +1,118 @@
+import { Asteroid, getNearestAsteroids } from 'asteroids';
 import { colors } from 'colors';
 import { blockSize, verticalTextOffset } from 'config';
 import { fps, globalFrame } from 'frame';
 import { Point } from 'point';
 
-export type BaseObject = 'base';
+type BaseObjectName = 'base';
 
-export type MainObject = keyof typeof mainObjects;
+type MainObjectName = 'solar' | 'battery' | 'turret';
 
-export type ForegroundObject = BaseObject | MainObject;
+export type ForegroundObjectName = BaseObjectName | MainObjectName;
 
-export type BuildableObject = keyof typeof buildableObjects;
+interface ForegroundObjectState {
+  base: Record<string, unknown>;
+  solar: Record<string, unknown>;
+  battery: {
+    energyLevel: number;
+  };
+  turret: {
+    mid: Point;
+    count: number;
+    range: number;
+    power: number;
+    targets: Asteroid[];
+  };
+}
 
-const baseObject = {
-  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
+type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
+  name: Name;
+  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
+  reduceState: (
+    state: ForegroundObjectState[Name],
+    context: unknown,
+  ) => Partial<ForegroundObjectState[Name]>;
+  width: number;
+  height: number;
+} & ForegroundObjectState[Name];
+
+export type ForegroundObject =
+  | ForegroundObjectWithState<'base'>
+  | ForegroundObjectWithState<'solar'>
+  | ForegroundObjectWithState<'battery'>
+  | ForegroundObjectWithState<'turret'>;
+
+export type BuildableObjectName = keyof typeof buildableObjects;
+
+const rangeToDistanceMultiplier = 200;
+const powerToDamageMultiplier = 0.02;
+
+const baseObjectGetter = getForegroundObjectGetter(
+  'base',
+  (context, { x, y }) => {
     context.font = '60px monospace';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillText('🗼', x + 1.5 * blockSize, y + 1.5 * blockSize + verticalTextOffset * 3);
   },
-  width: 3 * blockSize,
-  height: 3 * blockSize,
-} as const;
+  () => ({}),
+  () => ({}),
+  {
+    width: 3 * blockSize,
+    height: 3 * blockSize,
+  },
+);
 
 export const mainObjects = {
-  solar: {
-    draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
+  solar: getForegroundObjectGetter(
+    'solar',
+    (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🌞', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    width: blockSize,
-    height: blockSize,
-  },
-  battery: {
-    draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
+    () => ({}),
+    () => ({}),
+  ),
+  battery: getForegroundObjectGetter(
+    'battery',
+    (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔋', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    width: blockSize,
-    height: blockSize,
-  },
-  turret: {
-    draw: (context: CanvasRenderingContext2D, { x, y }: Point) => {
+    () => ({ energyLevel: 0 }),
+    () => ({}),
+  ),
+  turret: getForegroundObjectGetter(
+    'turret',
+    (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔫', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    width: blockSize,
-    height: blockSize,
-  },
+    (blockX) => ({
+      mid: new Point((blockX + 0.5) * blockSize, -blockSize / 2),
+      count: 1,
+      range: 1,
+      power: 1,
+      targets: [],
+    }),
+    ({ mid, count, range, power }) => {
+      const targets = getNearestAsteroids(mid, count, range * rangeToDistanceMultiplier);
+      for (const target of targets) {
+        target.health -= power * powerToDamageMultiplier;
+      }
+      return { targets };
+    },
+  ),
 } as const;
 
 export const foregroundObjects = {
-  base: baseObject,
+  base: baseObjectGetter,
   ...mainObjects,
 };
 
@@ -72,4 +128,28 @@ export function drawHover(
   context.lineDashOffset = Math.floor((globalFrame / fps) * -20);
   context.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1);
   context.setLineDash([]);
+}
+
+function getForegroundObjectGetter<Name extends ForegroundObjectName>(
+  name: Name,
+  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void,
+  getInitialState: (blockX: number) => ForegroundObjectState[Name],
+  reduceState: (
+    state: ForegroundObjectState[Name],
+    context: unknown,
+  ) => Partial<ForegroundObjectState[Name]>,
+  extra?: Partial<ForegroundObjectWithState<Name>>,
+) {
+  return Object.assign(
+    (blockX: number) => ({
+      name,
+      ...getInitialState(blockX),
+      draw,
+      reduceState,
+      width: blockSize,
+      height: blockSize,
+      ...extra,
+    }),
+    { draw, width: blockSize },
+  );
 }

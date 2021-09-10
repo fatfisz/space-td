@@ -2,7 +2,7 @@ import { updateAsteroids } from 'asteroids';
 import { initDisplay, updateDisplay } from 'display';
 import { initGround } from 'ground';
 import { initGui, updateGui } from 'gui';
-import { initObjects } from 'objects';
+import { initObjects, updateObjects } from 'objects';
 
 export function initEngine() {
   if (process.env.NODE_ENV !== 'production') {
@@ -24,6 +24,7 @@ export function initEngine() {
 
 export function engineTick() {
   updateAsteroids();
+  updateObjects();
   updateDisplay();
   updateGui();
 }

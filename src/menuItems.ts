@@ -9,8 +9,8 @@ import {
   padding,
   verticalTextOffset,
 } from 'config';
-import { getActiveBuildableObject, getActiveObject } from 'objects';
-import { BuildableObject, buildableObjects } from 'objectTypes';
+import { getActiveBuildableObjectName, getActiveObject } from 'objects';
+import { BuildableObjectName, buildableObjects } from 'objectTypes';
 import { Point } from 'point';
 
 export type TabName = 'build' | 'info';
@@ -24,7 +24,7 @@ interface MenuTabItem {
 }
 interface MenuBuildObjectItem {
   type: 'menuBuildObject';
-  name: BuildableObject;
+  name: BuildableObjectName;
 }
 export type MenuItem = MenuBackgroundItem | MenuTabItem | MenuBuildObjectItem;
 
@@ -33,12 +33,12 @@ type Draw = (context: CanvasRenderingContext2D, menuItem?: MenuItem | undefined)
 export const menuBackground: MenuBackgroundItem = { type: 'menu' };
 
 const buildableObjectEntries = Object.entries(buildableObjects) as [
-  BuildableObject,
-  typeof buildableObjects[BuildableObject],
+  BuildableObjectName,
+  typeof buildableObjects[BuildableObjectName],
 ][];
 const buildableObjectItem = Object.fromEntries(
   buildableObjectEntries.map(([name]) => [name, getBuildableObjectItem(name)]),
-) as Record<BuildableObject, MenuBuildObjectItem>;
+) as Record<BuildableObjectName, MenuBuildObjectItem>;
 
 const top = menuTop + menuLabelHeight + padding + 0.5;
 
@@ -46,7 +46,7 @@ export const tabs = {
   build: getTab('build', (context, menuItem) => {
     for (const [index, [name, { draw, width }]] of buildableObjectEntries.entries()) {
       const left = padding + (menuOptionWidth + padding) * index + 0.5;
-      const active = name === getActiveBuildableObject();
+      const active = name === getActiveBuildableObjectName();
       const hover = menuItem?.type === 'menuBuildObject' && menuItem.name === name;
 
       context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
@@ -126,6 +126,6 @@ function getTab(
   };
 }
 
-function getBuildableObjectItem(name: BuildableObject): MenuBuildObjectItem {
+function getBuildableObjectItem(name: BuildableObjectName): MenuBuildObjectItem {
   return { type: 'menuBuildObject', name };
 }
