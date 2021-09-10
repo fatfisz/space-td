@@ -61,11 +61,10 @@ const baseObjectGetter = getForegroundObjectGetter(
   },
   () => ({}),
   () => ({}),
-  (blockX) => ({
-    midX: (blockX + 1.5) * blockSize,
+  {
     width: 3 * blockSize,
     height: 3 * blockSize,
-  }),
+  },
 );
 
 export const mainObjects = {
@@ -147,21 +146,24 @@ function getForegroundObjectGetter<Name extends ForegroundObjectName>(
     state: ForegroundObjectState[Name],
     context: unknown,
   ) => Partial<ForegroundObjectState[Name]>,
-  getExtra?: (blockX: number) => Partial<ForegroundObjectWithState<Name>>,
+  extra?: Partial<ForegroundObjectWithState<Name>>,
 ) {
-  return Object.assign(
-    (blockX: number) => ({
-      name,
-      ...getInitialState(blockX),
-      draw,
+  const statics = {
+    name,
+    draw,
+    width: blockSize,
+    height: blockSize,
+    health: maxHealth,
+    maxHealth,
+    ...extra,
+  };
+  return {
+    get: (blockX: number) => ({
       reduceState,
-      midX: (blockX + 0.5) * blockSize,
-      width: blockSize,
-      height: blockSize,
-      health: maxHealth,
-      maxHealth,
-      ...getExtra?.(blockX),
+      midX: blockX * blockSize + statics.width / 2,
+      ...statics,
+      ...getInitialState(blockX),
     }),
-    { draw, width: blockSize },
-  );
+    ...statics,
+  };
 }

@@ -15,7 +15,6 @@ import {
 import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
 import { drawMenu, getMenuItemFromMouse, menuItemClick } from 'menu';
-import { MenuItem } from 'menuItems';
 import { getObjectBlockXFromCanvas, getObjectsRangeWithOffset, objectClick } from 'objects';
 import { Point } from 'point';
 
@@ -27,11 +26,11 @@ let cameraZoom = 1;
 
 let mousePosition = Point.empty;
 let canvasPosition = Point.empty;
-let menuItem: MenuItem | undefined;
+let menuItemIndex: number | undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
 let objectBlockXAtMouseDown: number | undefined;
-let menuItemAtMouseDown: MenuItem | undefined;
+let menuItemIndexAtMouseDown: number | undefined;
 let dragging = false;
 
 export function initDisplay() {
@@ -54,7 +53,7 @@ export function updateDisplay() {
     height: (displayHeight - menuHeight + 2) / cameraZoom,
   });
   resetTransform();
-  drawMenu(context, menuItem);
+  drawMenu(context, menuItemIndex);
 }
 
 function initGui() {
@@ -93,7 +92,7 @@ function initMouse() {
 
   canvas.addEventListener('wheel', (event) => {
     updateMouseFromEvent(event);
-    if (!menuItem) {
+    if (typeof menuItemIndex === 'undefined') {
       updateZoomFromEvent(event);
     }
   });
@@ -101,8 +100,8 @@ function initMouse() {
   canvas.addEventListener('mousedown', (event) => {
     event.preventDefault();
     updateMouseFromEvent(event);
-    if (menuItem) {
-      menuItemAtMouseDown = menuItem;
+    if (typeof menuItemIndex !== 'undefined') {
+      menuItemIndexAtMouseDown = menuItemIndex;
     } else {
       initMouseDown();
     }
@@ -110,9 +109,9 @@ function initMouse() {
 
   document.addEventListener('mouseup', (event) => {
     updateMouseFromEvent(event);
-    if (menuItem && menuItem === menuItemAtMouseDown) {
+    if (typeof menuItemIndex !== 'undefined' && menuItemIndex === menuItemIndexAtMouseDown) {
       objectClick(undefined);
-      menuItemClick(menuItem);
+      menuItemClick(menuItemIndex);
     } else if (!dragging && objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)) {
       objectClick(objectBlockXAtMouseDown);
     }
@@ -135,7 +134,7 @@ function updateMouseFromEvent({ clientX, clientY } = { clientX: NaN, clientY: Na
     .sub(new Point(displayWidth / 2, displayHeight / 2))
     .mul(1 / cameraZoom)
     .add(cameraPosition);
-  menuItem = getMenuItemFromMouse(mousePosition);
+  menuItemIndex = getMenuItemFromMouse(mousePosition);
 }
 
 function updateZoomFromEvent({ deltaY }: { deltaY: number }) {
@@ -173,14 +172,14 @@ function initMouseDown() {
 function clearMouse() {
   mousePosition = Point.empty;
   canvasPosition = Point.empty;
-  menuItem = undefined;
+  menuItemIndex = undefined;
 }
 
 function clearMouseDown() {
   mouseDownPosition = Point.empty;
   canvasAtMouseDownPosition = Point.empty;
   objectBlockXAtMouseDown = undefined;
-  menuItemAtMouseDown = undefined;
+  menuItemIndexAtMouseDown = undefined;
   dragging = false;
 }
 

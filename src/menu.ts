@@ -4,74 +4,115 @@ import {
   displayWidth,
   menuHeight,
   menuLabelHeight,
+  menuOptionHeight,
+  menuOptionWidth,
   padding,
   verticalTextOffset,
 } from 'config';
-import {
-  getMenuObjectFromMouse,
-  getMenuTabFromMouse,
-  menuBackground,
-  MenuItem,
-  TabName,
-  tabNames,
-  tabs,
-} from 'menuItems';
-import { setActiveBuildableObject } from 'objects';
+import { getActiveBuildableObjectName, setActiveBuildableObject } from 'objects';
+import { buildableObjects } from 'objectTypes';
 import { Point } from 'point';
 
 const menuTop = displayHeight - menuHeight;
-let activeTabName: TabName = 'build';
+const menuButtonTop = menuTop + padding + menuLabelHeight + 0.5;
+const menus = {
+  build: getMenu(
+    Object.values(buildableObjects),
+    (context, { left, active }, { name, draw, width }) => {
+      context.font = '12px monospace';
+      context.fillStyle = active ? colors.black : colors.white;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(
+        name,
+        left + menuOptionWidth / 2,
+        menuButtonTop + menuLabelHeight / 2 + verticalTextOffset,
+      );
 
-export function drawMenu(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
+      draw(
+        context,
+        new Point(left + (menuOptionWidth - width) / 2, menuButtonTop + menuLabelHeight),
+      );
+    },
+    ({ name }) => {
+      setActiveBuildableObject(name);
+    },
+    () => {
+      const activeBuildableObjectName = getActiveBuildableObjectName();
+      return activeBuildableObjectName && buildableObjects[activeBuildableObjectName];
+    },
+  ),
+};
+const activeMenu: keyof typeof menus = 'build';
+
+export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: number | undefined) {
   context.fillStyle = colors.black;
   context.fillRect(0, menuTop, displayWidth, menuHeight);
-  context.strokeStyle = colors.white;
-  context.strokeRect(0.5, menuTop + 0.5, displayWidth - 1, menuHeight - 1);
 
-  drawTabs(context, menuItem);
-  tabs[activeTabName].draw(context, menuItem);
+  context.strokeStyle = colors.white;
+  context.strokeRect(-1, menuTop + 0.5, displayWidth + 2, menuLabelHeight - 1);
+
+  context.fillStyle = colors.white;
+  context.font = '12px monospace';
+  context.textAlign = 'left';
+  context.textBaseline = 'middle';
+  context.fillText(activeMenu, padding, menuTop + 0.5 + menuLabelHeight / 2 + verticalTextOffset);
+
+  menus[activeMenu].draw(context, menuItemIndex);
 }
 
 export function getMenuItemFromMouse(point: Point) {
   if (point.y < menuTop) {
     return;
   }
-  return (
-    getMenuTabFromMouse(point) ?? getMenuObjectFromMouse(activeTabName, point) ?? menuBackground
-  );
+  for (let index = 0; index < displayWidth / (menuOptionWidth + padding); index += 1) {
+    if (
+      point.within(
+        padding + (menuOptionWidth + padding) * index + 0.5,
+        menuButtonTop,
+        menuOptionWidth,
+        menuOptionHeight,
+      )
+    ) {
+      return index;
+    }
+  }
+  return -1;
 }
 
-export function menuItemClick(menuItem: MenuItem) {
-  if (menuItem.type === 'tab') {
-    activeTabName = menuItem.name;
-  }
-  if (menuItem.type === 'menuBuildObject') {
-    setActiveBuildableObject(menuItem.name);
+export function menuItemClick(menuItemIndex: number | undefined) {
+  if (typeof menuItemIndex !== 'undefined' && menuItemIndex < menus[activeMenu].options.length) {
+    menus[activeMenu].optionClick(menus[activeMenu].options[menuItemIndex]);
   }
 }
 
-function drawTabs(context: CanvasRenderingContext2D, menuItem: MenuItem | undefined) {
-  context.font = '12px monospace';
-  context.textAlign = 'left';
-  context.textBaseline = 'middle';
+function getMenu<Option>(
+  options: Option[],
+  drawOption: (
+    context: CanvasRenderingContext2D,
+    params: { left: number; active: boolean; hover: boolean },
+    option: Option,
+  ) => void,
+  optionClick: (option: Option) => void,
+  getActiveOption?: () => Option | undefined,
+) {
+  return {
+    options,
+    draw: (context: CanvasRenderingContext2D, menuItemIndex: number | undefined) => {
+      for (const [index, option] of options.entries()) {
+        const left = padding + (menuOptionWidth + padding) * index + 0.5;
+        const active = getActiveOption?.() === option;
+        const hover = index === menuItemIndex;
 
-  let tabOffset = 0;
-  for (const tabName of tabNames) {
-    const active = tabName === activeTabName;
-    const hover = menuItem?.type === 'tab' && menuItem.name === tabName;
+        context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
+        context.fillRect(left, menuButtonTop, menuOptionWidth, menuOptionHeight);
 
-    context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
-    context.fillRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, menuLabelHeight);
+        context.strokeStyle = colors.white;
+        context.strokeRect(left, menuButtonTop, menuOptionWidth, menuOptionHeight);
 
-    context.fillStyle = active ? colors.black : colors.white;
-    context.fillText(
-      tabName,
-      tabOffset + padding,
-      menuTop + 0.5 + menuLabelHeight / 2 + verticalTextOffset,
-    );
-
-    context.strokeStyle = colors.white;
-    context.strokeRect(tabOffset + 0.5, menuTop + 0.5, tabs[tabName].width, menuLabelHeight);
-    tabOffset += tabs[tabName].width;
-  }
+        drawOption(context, { left, active, hover }, option);
+      }
+    },
+    optionClick,
+  };
 }

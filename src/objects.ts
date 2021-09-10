@@ -3,7 +3,6 @@ import { baseBlockX, baseSize, blockSize, maxOffsetX } from 'config';
 import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
 import { initHealthBars } from 'healthBars';
-import { menuItemClick } from 'menu';
 import {
   BuildableObjectName,
   buildableObjects,
@@ -15,7 +14,7 @@ import { addParticles } from 'particles';
 import { Point } from 'point';
 
 const objects = new Map<number, ForegroundObject>([
-  [baseBlockX, foregroundObjects.base(baseBlockX)],
+  [baseBlockX, foregroundObjects.base.get(baseBlockX)],
 ]);
 let minBlockX = baseBlockX;
 let maxBlockX = baseBlockX + 2;
@@ -137,7 +136,6 @@ export function objectClick(blockX: number | undefined) {
     activeBuildableObjectName = undefined;
   } else if (objects.has(blockX)) {
     activeObjectBlockX = blockX;
-    menuItemClick({ type: 'tab', name: 'info' });
   } else if (activeBuildableObjectName) {
     addObject(blockX, activeBuildableObjectName);
   }
@@ -146,7 +144,7 @@ export function objectClick(blockX: number | undefined) {
 function addObject(blockX: number, buildableObjectName: BuildableObjectName) {
   minBlockX = Math.min(blockX, minBlockX);
   maxBlockX = Math.max(blockX, maxBlockX);
-  const object = buildableObjects[buildableObjectName](blockX);
+  const object = buildableObjects[buildableObjectName].get(blockX);
   objects.set(blockX, object);
 }
 
@@ -170,7 +168,7 @@ export function getCollidingObject(points: Point[]) {
   for (const point of points) {
     const blockX = getNormalizedBlock(toBlock(point.x));
     const object = objects.get(blockX);
-    if (object && point.y < 0 && point.y > -object.height) {
+    if (object && point.y <= 0 && point.y >= -object.height) {
       return object;
     }
   }
