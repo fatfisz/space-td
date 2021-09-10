@@ -15,7 +15,7 @@ export function initHealthBars<Healthable extends HealthableBase>(
     context.strokeStyle = colors.green;
     context.beginPath();
     for (const healthable of getHealthables()) {
-      if (healthable.health === healthable.maxHealth) {
+      if (healthable.health >= healthable.maxHealth || healthable.health < 0) {
         continue;
       }
       const { midX, y, width } = getHealth(healthable);

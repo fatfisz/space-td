@@ -3,12 +3,13 @@ import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
 import { initHealthBars } from 'healthBars';
 import { randomBetween } from 'math';
-import { getObjectsRangeWithOffset } from 'objects';
+import { getCollidingObject, getObjectsRangeWithOffset } from 'objects';
 import { addParticles } from 'particles';
 import { Point } from 'point';
 
 export interface Asteroid {
   mass: number;
+  radius: number;
   angle: number;
   speed: number;
   position: Point;
@@ -19,6 +20,7 @@ export interface Asteroid {
   maxHealth: number;
   drawableHandle: number;
   vertexOffsets: number[];
+  computedVertices: Point[];
 }
 
 const maxAsteroids = 80;
@@ -43,14 +45,11 @@ const particleColors = [
 export function initAsteroids() {
   initHealthBars(
     () => asteroids,
-    ({ mass, position }) => {
-      const radius = getAsteroidRadius(mass);
-      return {
-        midX: position.x,
-        y: position.y - radius,
-        width: 2 * radius,
-      };
-    },
+    ({ radius, position: { x, y } }) => ({
+      midX: x,
+      y: y - radius,
+      width: 2 * radius,
+    }),
   );
 }
 
@@ -64,7 +63,8 @@ export function updateAsteroids() {
     }
     asteroid.position = asteroid.position.add(asteroid.dPosition);
     asteroid.r += asteroid.dr;
-    maybeDestroyAsteroid(asteroid);
+    computeAsteroidVertices(asteroid);
+    checkAsteroidForCollisions(asteroid);
   }
 }
 
@@ -84,9 +84,9 @@ function addAsteroid(
     spawnY,
   ),
 ) {
-  const radius = getAsteroidRadius(mass);
   const asteroid = {
     mass,
+    radius: (blockSize * mass) / 2,
     angle,
     speed,
     position,
@@ -97,7 +97,12 @@ function addAsteroid(
     maxHealth: 2 ** mass,
     drawableHandle: addDrawable('objects', (context, { x1, y1, width, height }) => {
       if (
-        !asteroid.position.within(x1 - radius, y1 - radius, width + radius * 2, height + radius * 2)
+        !asteroid.position.within(
+          x1 - asteroid.radius,
+          y1 - asteroid.radius,
+          width + asteroid.radius * 2,
+          height + asteroid.radius * 2,
+        )
       ) {
         return;
       }
@@ -105,12 +110,10 @@ function addAsteroid(
       context.fillStyle = colors.grey500;
       context.strokeStyle = colors.grey300;
       context.beginPath();
-      for (let index = 0; index < asteroid.vertexOffsets.length; index += 1) {
-        const offset = asteroid.vertexOffsets[index] * radius;
-        const angle = asteroid.r + Math.PI * 2 * (index / asteroid.vertexOffsets.length);
-        const x = asteroid.position.x + Math.sin(angle) * offset;
-        const y = asteroid.position.y + Math.cos(angle) * offset;
-        if (index === 0) {
+      let first = true;
+      for (const { x, y } of asteroid.computedVertices) {
+        if (first) {
+          first = false;
           context.moveTo(x, y);
         } else {
           context.lineTo(x, y);
@@ -121,14 +124,16 @@ function addAsteroid(
       context.stroke();
     }),
     vertexOffsets: getAsteroidVertexOffsets(mass),
+    computedVertices: [],
   };
+  computeAsteroidVertices(asteroid);
   asteroids.add(asteroid);
 }
 
-function destroyAsteroid(asteroid: Asteroid) {
+function destroyAsteroid(asteroid: Asteroid, split = true) {
   deleteAsteroid(asteroid);
-  addParticles(asteroid.position, getAsteroidRadius(asteroid.mass), particleColors);
-  if (asteroid.mass === 1) {
+  addParticles(asteroid.position, asteroid.radius, particleColors);
+  if (asteroid.mass === 1 || !split) {
     return;
   }
   const angle = asteroid.angle;
@@ -146,20 +151,31 @@ function destroyAsteroid(asteroid: Asteroid) {
   );
 }
 
-function maybeDestroyAsteroid(asteroid: Asteroid) {
-  if (asteroid.position.y < 0) {
+function computeAsteroidVertices(asteroid: Asteroid) {
+  asteroid.computedVertices = asteroid.vertexOffsets.map((offset, index, { length }) => {
+    const angle = asteroid.r + Math.PI * 2 * (index / length);
+    return new Point(
+      asteroid.position.x + Math.sin(angle) * offset * asteroid.radius,
+      asteroid.position.y + Math.cos(angle) * offset * asteroid.radius,
+    );
+  });
+}
+
+function checkAsteroidForCollisions(asteroid: Asteroid) {
+  const collidingObject = getCollidingObject(asteroid.computedVertices);
+  if (collidingObject) {
+    collidingObject.health -= getAsteroidDamage(asteroid);
+    destroyAsteroid(asteroid, false);
     return;
   }
-  destroyAsteroid(asteroid);
+  if (asteroid.computedVertices.some(({ y }) => y > 0)) {
+    destroyAsteroid(asteroid, false);
+  }
 }
 
 function deleteAsteroid(asteroid: Asteroid) {
   asteroids.delete(asteroid);
   removeDrawable(asteroid.drawableHandle);
-}
-
-function getAsteroidRadius(mass: number) {
-  return (blockSize * mass) / 2;
 }
 
 function getAsteroidVertexOffsets(mass: number) {
@@ -189,4 +205,9 @@ export function getNearestAsteroids(point: Point, count: number, maxDistance: nu
     }
   }
   return nearestAsteroids.map(([, asteroid]) => asteroid);
+}
+
+function getAsteroidDamage(asteroid: Asteroid): number {
+  const alpha = asteroid.health / asteroid.maxHealth;
+  return asteroid.mass ** 2 * alpha + (asteroid.mass - 1) ** 2 * (1 - alpha);
 }

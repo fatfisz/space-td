@@ -11,6 +11,7 @@ import {
   ForegroundObject,
   foregroundObjects,
 } from 'objectTypes';
+import { addParticles } from 'particles';
 import { Point } from 'point';
 
 const objects = new Map<number, ForegroundObject>([
@@ -20,6 +21,15 @@ let minBlockX = baseBlockX;
 let maxBlockX = baseBlockX + 2;
 let activeObjectBlockX: number | undefined;
 let activeBuildableObjectName: BuildableObjectName | undefined;
+const particleColors = [
+  colors.red,
+  colors.orange200,
+  colors.orange300,
+  colors.orange400,
+  colors.orange500,
+  colors.orange600,
+  colors.yellow,
+];
 
 export function initObjects() {
   addDrawable('objects', (context, { position, x1, x2 }) => {
@@ -34,7 +44,13 @@ export function initObjects() {
         continue;
       }
       const topLeft = new Point(blockX * blockSize, -object.height);
+      if (object.health <= 0) {
+        context.globalAlpha = 0.5;
+      }
       object.draw(context, topLeft);
+      if (object.health <= 0) {
+        context.globalAlpha = 1;
+      }
 
       const mouseContainedInObject = position.within(
         topLeft.x,
@@ -76,8 +92,21 @@ export function initObjects() {
 }
 
 export function updateObjects() {
-  for (const object of objects.values()) {
-    Object.assign(object, object.reduceState(object as never, {}));
+  for (const [blockX, object] of objects.entries()) {
+    if (object.health > 0) {
+      Object.assign(object, object.reduceState(object as never, {}));
+      continue;
+    }
+    if (blockX === baseBlockX) {
+      // TODO: end game
+    }
+    addParticles(
+      new Point(object.midX, -object.height / 2),
+      object.height / 2,
+      particleColors,
+      true,
+    );
+    objects.delete(blockX);
   }
 }
 
@@ -94,13 +123,11 @@ function drawBuiltObject(context: CanvasRenderingContext2D, blockX: number, posi
 }
 
 export function getObjectBlockXFromCanvas({ x, y }: Point): number | undefined {
-  const blockX = toBlock(x);
-  const normalizedBlockX =
-    blockX > baseBlockX && blockX < baseBlockX + baseSize ? baseBlockX : blockX;
-  const object = objects.get(normalizedBlockX);
+  const blockX = getNormalizedBlock(toBlock(x));
+  const object = objects.get(blockX);
   const height = object?.height ?? blockSize;
   if (y <= 0 && y >= -height) {
-    return normalizedBlockX;
+    return blockX;
   }
 }
 
@@ -137,4 +164,18 @@ export function setActiveBuildableObject(buildableObjectName: BuildableObjectNam
 
 export function getObjectsRangeWithOffset(): [min: number, max: number] {
   return [minBlockX * blockSize - maxOffsetX, (maxBlockX + 1) * blockSize - 1 + maxOffsetX];
+}
+
+export function getCollidingObject(points: Point[]) {
+  for (const point of points) {
+    const blockX = getNormalizedBlock(toBlock(point.x));
+    const object = objects.get(blockX);
+    if (object && point.y < 0 && point.y > -object.height) {
+      return object;
+    }
+  }
+}
+
+function getNormalizedBlock(blockX: number) {
+  return blockX > baseBlockX && blockX < baseBlockX + baseSize ? baseBlockX : blockX;
 }

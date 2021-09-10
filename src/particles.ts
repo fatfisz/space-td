@@ -40,8 +40,8 @@ export function updateParticles() {
   }
 }
 
-export function addParticles(mid: Point, radius: number, colors: string[]) {
-  const particleCount = radius ** 2 * density;
+export function addParticles(mid: Point, radius: number, colors: string[], highDensity = false) {
+  const particleCount = radius ** 2 * (highDensity ? density * 4 : density);
   for (let index = 0; index < particleCount; index += 1) {
     const angle = randomBetween(0, Math.PI * 2);
     const offsetPoint = new Point(Math.sin(angle), Math.cos(angle));
