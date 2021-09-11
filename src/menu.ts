@@ -14,7 +14,7 @@ import { buildableObjects } from 'objectTypes';
 import { Point } from 'point';
 
 const menuTop = displayHeight - menuHeight;
-const menuButtonTop = menuTop + padding + menuLabelHeight + 0.5;
+const menuButtonTop = menuTop + menuLabelHeight;
 const menus = {
   build: getMenu(
     Object.values(buildableObjects),
@@ -46,7 +46,7 @@ const menus = {
 const activeMenu: keyof typeof menus = 'build';
 
 export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: number | undefined) {
-  context.fillStyle = colors.black;
+  context.fillStyle = colors.grey700;
   context.fillRect(0, menuTop, displayWidth, menuHeight);
 
   context.strokeStyle = colors.white;
@@ -66,14 +66,7 @@ export function getMenuItemFromMouse(point: Point) {
     return;
   }
   for (let index = 0; index < displayWidth / (menuOptionWidth + padding); index += 1) {
-    if (
-      point.within(
-        padding + (menuOptionWidth + padding) * index + 0.5,
-        menuButtonTop,
-        menuOptionWidth,
-        menuOptionHeight,
-      )
-    ) {
+    if (point.within(menuOptionWidth * index, menuButtonTop, menuOptionWidth, menuOptionHeight)) {
       return index;
     }
   }
@@ -81,7 +74,11 @@ export function getMenuItemFromMouse(point: Point) {
 }
 
 export function menuItemClick(menuItemIndex: number | undefined) {
-  if (typeof menuItemIndex !== 'undefined' && menuItemIndex < menus[activeMenu].options.length) {
+  if (
+    typeof menuItemIndex !== 'undefined' &&
+    menuItemIndex >= 0 &&
+    menuItemIndex < menus[activeMenu].options.length
+  ) {
     menus[activeMenu].optionClick(menus[activeMenu].options[menuItemIndex]);
   }
 }
@@ -100,15 +97,18 @@ function getMenu<Option>(
     options,
     draw: (context: CanvasRenderingContext2D, menuItemIndex: number | undefined) => {
       for (const [index, option] of options.entries()) {
-        const left = padding + (menuOptionWidth + padding) * index + 0.5;
+        const left = menuOptionWidth * index;
         const active = getActiveOption?.() === option;
         const hover = index === menuItemIndex;
 
-        context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.black;
+        context.fillStyle = active ? colors.white : hover ? `${colors.white}4` : colors.grey700;
         context.fillRect(left, menuButtonTop, menuOptionWidth, menuOptionHeight);
 
         context.strokeStyle = colors.white;
-        context.strokeRect(left, menuButtonTop, menuOptionWidth, menuOptionHeight);
+        context.beginPath();
+        context.moveTo(left + menuOptionWidth - 0.5, menuButtonTop);
+        context.lineTo(left + menuOptionWidth - 0.5, displayHeight);
+        context.stroke();
 
         drawOption(context, { left, active, hover }, option);
       }

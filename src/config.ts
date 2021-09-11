@@ -26,7 +26,7 @@ export const menuOptionWidth = 64;
 
 export const menuOptionHeight = menuLabelHeight + blockSize + padding;
 
-export const menuHeight = menuLabelHeight + padding + menuOptionHeight + padding;
+export const menuHeight = menuLabelHeight + menuOptionHeight;
 
 export const menuTop = displayHeight - menuHeight;
 
