@@ -1,25 +1,25 @@
+import { getNearestAsteroids } from 'asteroids';
 import { colors } from 'colors';
 import { baseBlockX, baseSize, blockSize, maxOffsetX } from 'config';
 import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
-import { initHealthBars } from 'healthBars';
 import {
+  BatteryObject,
   BuildableObjectName,
   buildableObjects,
   drawHover,
   ForegroundObject,
   foregroundObjects,
+  SolarObject,
+  TurretObject,
 } from 'objectTypes';
 import { addParticles } from 'particles';
 import { Point } from 'point';
+import { initStatusBars } from 'statusBars';
 
 const objects = new Map<number, ForegroundObject>([
   [baseBlockX, foregroundObjects.base.get(baseBlockX)],
 ]);
-let minBlockX = baseBlockX;
-let maxBlockX = baseBlockX + 2;
-let activeObjectBlockX: number | undefined;
-let activeBuildableObjectName: BuildableObjectName | undefined;
 const particleColors = [
   colors.orange200,
   colors.orange300,
@@ -28,6 +28,20 @@ const particleColors = [
   colors.orange600,
   colors.yellow,
 ];
+const solars = new Set<SolarObject>();
+const batteries = new Set<BatteryObject>();
+const turrets = new Set<TurretObject>();
+const sun = 1;
+const solarEnergyMultiplier = 10;
+const batteryEnergyMultiplier = 1000;
+const turretEnergyMultiplier = 15;
+const rangeToDistanceMultiplier = 200;
+const powerToDamageMultiplier = 0.02;
+let minBlockX = baseBlockX;
+let maxBlockX = baseBlockX + 2;
+let activeObjectBlockX: number | undefined;
+let activeBuildableObjectName: BuildableObjectName | undefined;
+let turretEnergyFactor = 1;
 
 export function initObjects() {
   addDrawable('objects', (context, { position, x1, x2 }) => {
@@ -63,7 +77,11 @@ export function initObjects() {
   });
 
   addDrawable('backgroundObjects', (context) => {
-    context.strokeStyle = colors.red;
+    const opacity = Math.max(
+      Math.floor(turretEnergyFactor * 15),
+      solars.size === 0 ? 0 : 8,
+    ).toString(16);
+    context.strokeStyle = `${colors.red}${opacity}`;
     for (const object of objects.values()) {
       if (object.name !== 'turret') {
         continue;
@@ -79,32 +97,86 @@ export function initObjects() {
     context.lineWidth = 1;
   });
 
-  initHealthBars(
+  initStatusBars(
+    colors.green,
     () => objects.values(),
-    ({ midX, width, height }) => ({
+    ({ midX, width, height, health, maxHealth }) => ({
       midX,
       width: width - 2,
-      y: -height,
+      y: -height - 4,
+      value: health / maxHealth,
+    }),
+  );
+
+  initStatusBars(
+    colors.blue,
+    () => batteries,
+    ({ midX, width, height, energy, storage }) => ({
+      midX,
+      width: width - 2,
+      y: -height - 1,
+      value: energy / storage,
     }),
   );
 }
 
 export function updateObjects() {
   for (const [blockX, object] of objects.entries()) {
-    if (object.health > 0) {
-      Object.assign(object, object.reduceState(object as never, {}));
-      continue;
+    if (object.health <= 0) {
+      destroyObject(blockX, object);
     }
-    if (blockX === baseBlockX) {
-      // TODO: end game
+  }
+
+  let availableSolarEnergy = 0;
+  for (const { efficiency } of solars) {
+    availableSolarEnergy += efficiency * solarEnergyMultiplier * sun;
+  }
+
+  let availableBatteryEnergy = 0;
+  for (const { energy } of batteries) {
+    availableBatteryEnergy += energy * batteryEnergyMultiplier;
+  }
+
+  let requiredEnergy = 0;
+  for (const turret of turrets) {
+    const { mid, count, range, power } = turret;
+    turret.targets = getNearestAsteroids(mid, count, range * rangeToDistanceMultiplier);
+    requiredEnergy += turret.targets.length * count * power * turretEnergyMultiplier;
+  }
+
+  const usedEnergy = Math.min(requiredEnergy, availableSolarEnergy + availableBatteryEnergy);
+  turretEnergyFactor = usedEnergy / requiredEnergy;
+
+  for (const turret of turrets) {
+    const { targets, power } = turret;
+    for (const target of targets) {
+      target.health -= power * powerToDamageMultiplier * turretEnergyFactor;
     }
-    addParticles(
-      new Point(object.midX, -object.height / 2),
-      object.height / 2,
-      particleColors,
-      true,
-    );
-    objects.delete(blockX);
+  }
+
+  let batteryDiffEnergy = (availableSolarEnergy - usedEnergy) / batteryEnergyMultiplier;
+  if (batteryDiffEnergy > 0) {
+    const sortedBatteries = [...batteries].sort((a, b) => b.energy - a.energy);
+    for (let index = 0; index < sortedBatteries.length; index += 1) {
+      const battery = sortedBatteries[index];
+      const replenishedEnergy = Math.min(
+        batteryDiffEnergy / (sortedBatteries.length - index),
+        battery.storage - battery.energy,
+      );
+      battery.energy += replenishedEnergy;
+      batteryDiffEnergy -= replenishedEnergy;
+    }
+  } else if (batteryDiffEnergy < 0) {
+    const sortedBatteries = [...batteries].sort((a, b) => a.energy - b.energy);
+    for (let index = 0; index < sortedBatteries.length; index += 1) {
+      const battery = sortedBatteries[index];
+      const drainedEnergy = Math.max(
+        batteryDiffEnergy / (sortedBatteries.length - index),
+        -battery.energy,
+      );
+      battery.energy += drainedEnergy;
+      batteryDiffEnergy -= drainedEnergy;
+    }
   }
 }
 
@@ -145,6 +217,30 @@ function addObject(blockX: number, buildableObjectName: BuildableObjectName) {
   maxBlockX = Math.max(blockX, maxBlockX);
   const object = buildableObjects[buildableObjectName].get(blockX);
   objects.set(blockX, object);
+
+  if (object.name === 'solar') {
+    solars.add(object);
+  } else if (object.name === 'battery') {
+    batteries.add(object);
+  } else if (object.name === 'turret') {
+    turrets.add(object);
+  }
+}
+
+function destroyObject(blockX: number, object: ForegroundObject) {
+  if (blockX === baseBlockX) {
+    // TODO: end game
+  }
+  addParticles(new Point(object.midX, -object.height / 2), object.height / 2, particleColors, true);
+  objects.delete(blockX);
+
+  if (object.name === 'solar') {
+    solars.delete(object);
+  } else if (object.name === 'battery') {
+    batteries.delete(object);
+  } else if (object.name === 'turret') {
+    turrets.delete(object);
+  }
 }
 
 export function getActiveObject() {

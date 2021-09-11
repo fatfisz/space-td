@@ -1,4 +1,4 @@
-import { Asteroid, getNearestAsteroids } from 'asteroids';
+import { Asteroid } from 'asteroids';
 import { colors } from 'colors';
 import { blockSize, verticalTextOffset } from 'config';
 import { fps, globalFrame } from 'frame';
@@ -6,15 +6,18 @@ import { Point } from 'point';
 
 type BaseObjectName = 'base';
 
-type MainObjectName = 'solar' | 'battery' | 'turret';
+export type BuildableObjectName = 'solar' | 'battery' | 'turret';
 
-export type ForegroundObjectName = BaseObjectName | MainObjectName;
+export type ForegroundObjectName = BaseObjectName | BuildableObjectName;
 
 interface ForegroundObjectState {
   base: Record<string, unknown>;
-  solar: Record<string, unknown>;
+  solar: {
+    efficiency: number;
+  };
   battery: {
-    energyLevel: number;
+    storage: number;
+    energy: number;
   };
   turret: {
     mid: Point;
@@ -28,10 +31,6 @@ interface ForegroundObjectState {
 type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
   name: Name;
   draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
-  reduceState: (
-    state: ForegroundObjectState[Name],
-    context: unknown,
-  ) => Partial<ForegroundObjectState[Name]>;
   midX: number;
   width: number;
   height: number;
@@ -39,16 +38,15 @@ type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
   maxHealth: number;
 } & ForegroundObjectState[Name];
 
-export type ForegroundObject =
-  | ForegroundObjectWithState<'base'>
-  | ForegroundObjectWithState<'solar'>
-  | ForegroundObjectWithState<'battery'>
-  | ForegroundObjectWithState<'turret'>;
+type BaseObject = ForegroundObjectWithState<'base'>;
 
-export type BuildableObjectName = keyof typeof buildableObjects;
+export type SolarObject = ForegroundObjectWithState<'solar'>;
 
-const rangeToDistanceMultiplier = 200;
-const powerToDamageMultiplier = 0.02;
+export type BatteryObject = ForegroundObjectWithState<'battery'>;
+
+export type TurretObject = ForegroundObjectWithState<'turret'>;
+
+export type ForegroundObject = BaseObject | SolarObject | BatteryObject | TurretObject;
 
 const baseObjectGetter = getForegroundObjectGetter(
   'base',
@@ -59,7 +57,6 @@ const baseObjectGetter = getForegroundObjectGetter(
     context.textBaseline = 'middle';
     context.fillText('🗼', x + 1.5 * blockSize, y + 1.5 * blockSize + verticalTextOffset * 3);
   },
-  () => ({}),
   () => ({}),
   {
     width: 3 * blockSize,
@@ -77,8 +74,9 @@ export const mainObjects = {
       context.textBaseline = 'middle';
       context.fillText('🌞', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    () => ({}),
-    () => ({}),
+    () => ({
+      efficiency: 1,
+    }),
   ),
   battery: getForegroundObjectGetter(
     'battery',
@@ -89,8 +87,10 @@ export const mainObjects = {
       context.textBaseline = 'middle';
       context.fillText('🔋', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    () => ({ energyLevel: 0 }),
-    () => ({}),
+    () => ({
+      storage: 1,
+      energy: 0,
+    }),
   ),
   turret: getForegroundObjectGetter(
     'turret',
@@ -108,15 +108,8 @@ export const mainObjects = {
       power: 1,
       targets: [],
     }),
-    ({ mid, count, range, power }) => {
-      const targets = getNearestAsteroids(mid, count, range * rangeToDistanceMultiplier);
-      for (const target of targets) {
-        target.health -= power * powerToDamageMultiplier;
-      }
-      return { targets };
-    },
   ),
-} as const;
+};
 
 export const foregroundObjects = {
   base: baseObjectGetter,
@@ -141,12 +134,8 @@ function getForegroundObjectGetter<Name extends ForegroundObjectName>(
   name: Name,
   maxHealth: number,
   draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void,
-  getInitialState: (blockX: number) => ForegroundObjectState[Name],
-  reduceState: (
-    state: ForegroundObjectState[Name],
-    context: unknown,
-  ) => Partial<ForegroundObjectState[Name]>,
-  extra?: Partial<ForegroundObjectWithState<Name>>,
+  getStateFromBlockX: (blockX: number) => ForegroundObjectState[Name],
+  staticState?: Partial<ForegroundObjectWithState<Name>>,
 ) {
   const statics = {
     name,
@@ -155,14 +144,13 @@ function getForegroundObjectGetter<Name extends ForegroundObjectName>(
     height: blockSize,
     health: maxHealth,
     maxHealth,
-    ...extra,
+    ...staticState,
   };
   return {
     get: (blockX: number) => ({
-      reduceState,
       midX: blockX * blockSize + statics.width / 2,
       ...statics,
-      ...getInitialState(blockX),
+      ...getStateFromBlockX?.(blockX),
     }),
     ...statics,
   };

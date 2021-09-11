@@ -18,7 +18,7 @@ const priorityOrder = [
   'backgroundObjects',
   'objects',
   'ground',
-  'healthBars',
+  'statusBars',
   'particles',
 ] as const;
 

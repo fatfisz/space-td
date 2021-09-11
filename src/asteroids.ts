@@ -1,11 +1,11 @@
 import { colors } from 'colors';
 import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
-import { initHealthBars } from 'healthBars';
 import { randomBetween } from 'math';
 import { getCollidingObject, getObjectsRangeWithOffset } from 'objects';
 import { addParticles } from 'particles';
 import { Point } from 'point';
+import { initStatusBars } from 'statusBars';
 
 export interface Asteroid {
   mass: number;
@@ -44,12 +44,14 @@ const particleColors = [
 ];
 
 export function initAsteroids() {
-  initHealthBars(
+  initStatusBars(
+    colors.green,
     () => asteroids,
-    ({ radius, position: { x, y } }) => ({
+    ({ radius, position: { x, y }, health, maxHealth }) => ({
       midX: x,
       y: y - radius,
       width: 2 * radius,
+      value: health / maxHealth,
     }),
   );
 }
