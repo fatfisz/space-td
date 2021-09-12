@@ -1,5 +1,6 @@
 import { colors } from 'colors';
 import {
+  blockSize,
   displayHeight,
   displayWidth,
   menuHeight,
@@ -9,8 +10,13 @@ import {
   padding,
   verticalTextOffset,
 } from 'config';
-import { getActiveBuildableObjectName, setActiveBuildableObject } from 'objects';
-import { buildableObjects } from 'objectTypes';
+import {
+  getActiveBuildableObjectName,
+  getActiveObject,
+  objectClick,
+  setActiveBuildableObject,
+} from 'objects';
+import { buildableObjects, ForegroundObjectUpgrades, maxUpgrade } from 'objectTypes';
 import { Point } from 'point';
 
 const menuTop = displayHeight - menuHeight;
@@ -18,7 +24,7 @@ const menuButtonTop = menuTop + menuLabelHeight;
 const menus = {
   build: getMenu(
     Object.values(buildableObjects),
-    (context, { left, active }, { name, draw, width }) => {
+    (context, { left, active }, { name, width, draw }) => {
       context.font = '12px monospace';
       context.fillStyle = active ? colors.black : colors.white;
       context.textAlign = 'center';
@@ -42,10 +48,15 @@ const menus = {
       return activeBuildableObjectName && buildableObjects[activeBuildableObjectName];
     },
   ),
+  'upgrade base': getUpgradeMenu<'base'>(['armor']),
+  'upgrade solar': getUpgradeMenu<'solar'>(['efficiency', 'armor']),
+  'upgrade battery': getUpgradeMenu<'battery'>(['storage', 'armor']),
+  'upgrade turret': getUpgradeMenu<'turret'>(['power', 'range', 'count', 'armor']),
 };
-const activeMenu: keyof typeof menus = 'build';
 
 export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: number | undefined) {
+  const activeMenu = getActiveMenu();
+
   context.fillStyle = colors.grey700;
   context.fillRect(0, menuTop, displayWidth, menuHeight);
 
@@ -74,24 +85,33 @@ export function getMenuItemFromMouse(point: Point) {
 }
 
 export function menuItemClick(menuItemIndex: number | undefined) {
+  const activeMenu = getActiveMenu();
+  if (getActiveMenu() === 'build') {
+    objectClick(undefined);
+  }
   if (
     typeof menuItemIndex !== 'undefined' &&
     menuItemIndex >= 0 &&
     menuItemIndex < menus[activeMenu].options.length
   ) {
-    menus[activeMenu].optionClick(menus[activeMenu].options[menuItemIndex]);
+    menus[activeMenu].optionClick(menus[activeMenu].options[menuItemIndex] as never);
   }
 }
 
-function getMenu<Option>(
-  options: Option[],
+function getActiveMenu(): keyof typeof menus {
+  const activeObjectName = getActiveObject()?.name;
+  return activeObjectName ? `upgrade ${activeObjectName}` : 'build';
+}
+
+function getMenu<Options extends unknown[]>(
+  options: Options,
   drawOption: (
     context: CanvasRenderingContext2D,
     params: { left: number; active: boolean; hover: boolean },
-    option: Option,
+    option: Options[number],
   ) => void,
-  optionClick: (option: Option) => void,
-  getActiveOption?: () => Option | undefined,
+  optionClick: (option: Options[number]) => void,
+  getActiveOption?: () => Options[number] | undefined,
 ) {
   return {
     options,
@@ -115,4 +135,33 @@ function getMenu<Option>(
     },
     optionClick,
   };
+}
+
+function getUpgradeMenu<Name extends keyof ForegroundObjectUpgrades>(
+  upgrades: ForegroundObjectUpgrades[Name],
+) {
+  return getMenu(
+    upgrades,
+    (context, { left, active }, name) => {
+      context.font = '12px monospace';
+      context.fillStyle = active ? colors.black : colors.white;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(
+        name,
+        left + menuOptionWidth / 2,
+        menuButtonTop + menuLabelHeight / 2 + verticalTextOffset,
+      );
+
+      const value = getActiveObject()![name as never];
+      context.fillText(
+        value === maxUpgrade ? `maxed (${value})` : `${value} 🠖 ${value + 1}`,
+        left + menuOptionWidth / 2,
+        menuButtonTop + menuLabelHeight + blockSize / 2 + verticalTextOffset,
+      );
+    },
+    (name) => {
+      getActiveObject()!.upgrade(name as never);
+    },
+  );
 }

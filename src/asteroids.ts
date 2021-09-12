@@ -12,8 +12,8 @@ export interface Asteroid {
   radius: number;
   angle: number;
   speed: number;
-  position: Point;
-  dPosition: Point;
+  mid: Point;
+  dMid: Point;
   r: number;
   dr: number;
   health: number;
@@ -47,9 +47,9 @@ export function initAsteroids() {
   initStatusBars(
     colors.green,
     () => asteroids,
-    ({ radius, position: { x, y }, health, maxHealth }) => ({
-      midX: x,
-      y: y - radius,
+    ({ radius, mid, health, maxHealth }) => ({
+      mid,
+      offsetY: -radius,
       width: 2 * radius,
       value: health / maxHealth,
     }),
@@ -64,7 +64,7 @@ export function updateAsteroids() {
       destroyAsteroid(asteroid);
       continue;
     }
-    asteroid.position = asteroid.position.add(asteroid.dPosition);
+    asteroid.mid = asteroid.mid.add(asteroid.dMid);
     asteroid.r += asteroid.dr;
     computeAsteroidVertices(asteroid);
     checkAsteroidForCollisions(asteroid);
@@ -82,25 +82,22 @@ function addAsteroid(
   mass = Math.floor(randomBetween(minMass, maxMass + 1)),
   angle = randomBetween(-maxAngle, maxAngle),
   speed = randomBetween(minSpeed, maxSpeed) / mass,
-  position = new Point(
-    randomBetween(...getObjectsRangeWithOffset()) + Math.tan(angle) * spawnY,
-    spawnY,
-  ),
+  mid = new Point(randomBetween(...getObjectsRangeWithOffset()) + Math.tan(angle) * spawnY, spawnY),
 ) {
   const asteroid = {
     mass,
     radius: (blockSize * mass) / 2,
     angle,
     speed,
-    position,
-    dPosition: new Point(Math.sin(angle), Math.cos(angle)).mul(speed),
+    mid,
+    dMid: new Point(Math.sin(angle), Math.cos(angle)).mul(speed),
     r: 0,
     dr: (Math.sign(Math.random() - 0.5) * randomBetween(minRotation, maxRotation)) / mass,
     health: 2 ** mass,
     maxHealth: 2 ** mass,
     drawableHandle: addDrawable('objects', (context, { x1, y1, width, height }) => {
       if (
-        !asteroid.position.within(
+        !asteroid.mid.within(
           x1 - asteroid.radius,
           y1 - asteroid.radius,
           width + asteroid.radius * 2,
@@ -135,31 +132,21 @@ function addAsteroid(
 
 function destroyAsteroid(asteroid: Asteroid) {
   deleteAsteroid(asteroid);
-  addParticles(asteroid.position, asteroid.radius, particleColors);
+  addParticles(asteroid.mid, asteroid.radius, particleColors);
   if (asteroid.mass === 1) {
     return;
   }
   const angle = asteroid.angle;
-  addAsteroid(
-    asteroid.mass - 1,
-    angle - Math.PI / 12,
-    (asteroid.speed * asteroid.mass) / (asteroid.mass - 1),
-    asteroid.position,
-  );
-  addAsteroid(
-    asteroid.mass - 1,
-    angle + Math.PI / 12,
-    (asteroid.speed * asteroid.mass) / (asteroid.mass - 1),
-    asteroid.position,
-  );
+  addAsteroid(asteroid.mass - 1, angle - Math.PI / 12, asteroid.speed, asteroid.mid);
+  addAsteroid(asteroid.mass - 1, angle + Math.PI / 12, asteroid.speed, asteroid.mid);
 }
 
 function computeAsteroidVertices(asteroid: Asteroid) {
   asteroid.computedVertices = asteroid.vertexOffsets.map((offset, index, { length }) => {
     const angle = asteroid.r + Math.PI * 2 * (index / length);
     return new Point(
-      asteroid.position.x + Math.sin(angle) * offset * asteroid.radius,
-      asteroid.position.y + Math.cos(angle) * offset * asteroid.radius,
+      asteroid.mid.x + Math.sin(angle) * offset * asteroid.radius,
+      asteroid.mid.y + Math.cos(angle) * offset * asteroid.radius,
     );
   });
 }
@@ -167,7 +154,8 @@ function computeAsteroidVertices(asteroid: Asteroid) {
 function checkAsteroidForCollisions(asteroid: Asteroid) {
   const collidingObject = getCollidingObject(asteroid.computedVertices);
   if (collidingObject) {
-    collidingObject.health -= getAsteroidDamage(asteroid);
+    collidingObject.health -=
+      getAsteroidDamage(asteroid) * getDamageReduction(collidingObject.armor);
     destroyAsteroid(asteroid);
     return;
   }
@@ -193,7 +181,7 @@ function getAsteroidVertexOffsets(mass: number) {
 export function getNearestAsteroids(point: Point, count: number, maxDistance: number) {
   const nearestAsteroids: [distance: number, asteroid: Asteroid][] = [];
   for (const asteroid of asteroids) {
-    const distance = asteroid.position.distance(point);
+    const distance = asteroid.mid.distance(point);
     if (distance > maxDistance) {
       continue;
     }
@@ -210,7 +198,11 @@ export function getNearestAsteroids(point: Point, count: number, maxDistance: nu
   return nearestAsteroids.map(([, asteroid]) => asteroid);
 }
 
-function getAsteroidDamage(asteroid: Asteroid): number {
+function getAsteroidDamage(asteroid: Asteroid) {
   const alpha = asteroid.health / asteroid.maxHealth;
   return asteroid.mass ** 2 * alpha + (asteroid.mass - 1) ** 2 * (1 - alpha);
+}
+
+function getDamageReduction(armor: number) {
+  return 1 - (armor - 1) * 0.25;
 }

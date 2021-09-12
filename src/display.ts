@@ -30,8 +30,8 @@ let menuItemIndex: number | undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
 let objectBlockXAtMouseDown: number | undefined;
-let menuItemIndexAtMouseDown: number | undefined;
 let dragging = false;
+let menuClicked = false;
 
 export function initDisplay() {
   initGui();
@@ -101,7 +101,8 @@ function initMouse() {
     event.preventDefault();
     updateMouseFromEvent(event);
     if (typeof menuItemIndex !== 'undefined') {
-      menuItemIndexAtMouseDown = menuItemIndex;
+      menuClicked = true;
+      menuItemClick(menuItemIndex);
     } else {
       initMouseDown();
     }
@@ -109,10 +110,11 @@ function initMouse() {
 
   document.addEventListener('mouseup', (event) => {
     updateMouseFromEvent(event);
-    if (typeof menuItemIndex !== 'undefined' && menuItemIndex === menuItemIndexAtMouseDown) {
-      objectClick(undefined);
-      menuItemClick(menuItemIndex);
-    } else if (!dragging && objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)) {
+    if (
+      !dragging &&
+      !menuClicked &&
+      objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)
+    ) {
       objectClick(objectBlockXAtMouseDown);
     }
     clearMouseDown();
@@ -179,8 +181,8 @@ function clearMouseDown() {
   mouseDownPosition = Point.empty;
   canvasAtMouseDownPosition = Point.empty;
   objectBlockXAtMouseDown = undefined;
-  menuItemIndexAtMouseDown = undefined;
   dragging = false;
+  menuClicked = false;
 }
 
 function clearCanvas() {

@@ -3,8 +3,8 @@ import { randomBetween } from 'math';
 import { Point } from 'point';
 
 interface Particle {
-  position: Point;
-  dPosition: Point;
+  mid: Point;
+  dMid: Point;
   life: number;
   color: string;
 }
@@ -22,7 +22,7 @@ export function initParticles() {
     for (const particle of particles) {
       const opacity = Math.floor((particle.life / maxLife) * 16);
       context.fillStyle = `${particle.color}${opacity.toString(16)}`;
-      context.fillRect(particle.position.x - size / 2, particle.position.y - size / 2, size, size);
+      context.fillRect(particle.mid.x - size / 2, particle.mid.y - size / 2, size, size);
     }
   });
 }
@@ -36,7 +36,7 @@ export function updateParticles() {
     if (particle.life === 0) {
       particles.delete(particle);
     }
-    particle.position = particle.position.add(particle.dPosition);
+    particle.mid = particle.mid.add(particle.dMid);
   }
 }
 
@@ -46,8 +46,8 @@ export function addParticles(mid: Point, radius: number, colors: string[], highD
     const angle = randomBetween(0, Math.PI * 2);
     const offsetPoint = new Point(Math.sin(angle), Math.cos(angle));
     particles.add({
-      position: mid.add(offsetPoint.mul(Math.random() * radius)),
-      dPosition: offsetPoint.mul(Math.random() * speed),
+      mid: mid.add(offsetPoint.mul(Math.random() * radius)),
+      dMid: offsetPoint.mul(Math.random() * speed),
       life: maxLife,
       color: colors[Math.floor(Math.random() * colors.length)],
     });

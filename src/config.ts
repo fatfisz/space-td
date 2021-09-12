@@ -22,7 +22,7 @@ export const padding = 8;
 
 export const menuLabelHeight = 24;
 
-export const menuOptionWidth = 64;
+export const menuOptionWidth = 80;
 
 export const menuOptionHeight = menuLabelHeight + blockSize + padding;
 

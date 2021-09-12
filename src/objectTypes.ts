@@ -10,33 +10,31 @@ export type BuildableObjectName = 'solar' | 'battery' | 'turret';
 
 export type ForegroundObjectName = BaseObjectName | BuildableObjectName;
 
-interface ForegroundObjectState {
-  base: Record<string, unknown>;
-  solar: {
-    efficiency: number;
-  };
-  battery: {
-    storage: number;
-    energy: number;
-  };
-  turret: {
-    mid: Point;
-    count: number;
-    range: number;
-    power: number;
-    targets: Asteroid[];
-  };
+export interface ForegroundObjectUpgrades {
+  base: ['armor'];
+  solar: ['efficiency', 'armor'];
+  battery: ['storage', 'armor'];
+  turret: ['power', 'range', 'count', 'armor'];
 }
 
-type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
+interface ForegroundObjectState {
+  base: Record<string, unknown>;
+  solar: Record<string, unknown>;
+  battery: { energy: number };
+  turret: { targets: Asteroid[] };
+}
+
+export type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
   name: Name;
-  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
-  midX: number;
+  mid: Point;
   width: number;
   height: number;
   health: number;
   maxHealth: number;
-} & ForegroundObjectState[Name];
+  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
+  upgrade: (property: ForegroundObjectUpgrades[Name][number]) => void;
+} & Record<ForegroundObjectUpgrades[Name][number], number> &
+  ForegroundObjectState[Name];
 
 type BaseObject = ForegroundObjectWithState<'base'>;
 
@@ -46,77 +44,83 @@ export type BatteryObject = ForegroundObjectWithState<'battery'>;
 
 export type TurretObject = ForegroundObjectWithState<'turret'>;
 
-export type ForegroundObject = BaseObject | SolarObject | BatteryObject | TurretObject;
+export type BuildableObject = SolarObject | BatteryObject | TurretObject;
 
-const baseObjectGetter = getForegroundObjectGetter(
-  'base',
-  10,
-  (context, { x, y }) => {
+export type ForegroundObject = BaseObject | BuildableObject;
+
+export const maxUpgrade = 3;
+
+const baseObjectGetter = getForegroundObjectGetter({
+  name: 'base',
+  maxHealth: 10,
+  extra: {
+    width: 3 * blockSize,
+    height: 3 * blockSize,
+  },
+  upgrades: {
+    armor: 1,
+  },
+  draw: (context, { x, y }) => {
     context.font = '60px monospace';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillText('🗼', x + 1.5 * blockSize, y + 1.5 * blockSize + verticalTextOffset * 3);
   },
-  () => ({}),
-  {
-    width: 3 * blockSize,
-    height: 3 * blockSize,
-  },
-);
+});
 
-export const mainObjects = {
-  solar: getForegroundObjectGetter(
-    'solar',
-    2,
-    (context, { x, y }) => {
+export const buildableObjects = {
+  solar: getForegroundObjectGetter({
+    name: 'solar',
+    maxHealth: 2,
+    draw: (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🌞', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    () => ({
+    upgrades: {
       efficiency: 1,
-    }),
-  ),
-  battery: getForegroundObjectGetter(
-    'battery',
-    4,
-    (context, { x, y }) => {
+      armor: 1,
+    },
+  }),
+  battery: getForegroundObjectGetter({
+    name: 'battery',
+    maxHealth: 4,
+    draw: (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔋', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    () => ({
+    upgrades: {
       storage: 1,
-      energy: 0,
-    }),
-  ),
-  turret: getForegroundObjectGetter(
-    'turret',
-    6,
-    (context, { x, y }) => {
+      armor: 1,
+    },
+    getState: () => ({ energy: 0 }),
+  }),
+  turret: getForegroundObjectGetter({
+    name: 'turret',
+    maxHealth: 6,
+    draw: (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText('🔫', x + 0.5 * blockSize, y + 0.5 * blockSize + verticalTextOffset);
     },
-    (blockX) => ({
-      mid: new Point((blockX + 0.5) * blockSize, -blockSize / 2),
+    upgrades: {
       count: 1,
       range: 1,
       power: 1,
-      targets: [],
-    }),
-  ),
+      armor: 1,
+    },
+    getState: () => ({ targets: [] }),
+  }),
 };
 
 export const foregroundObjects = {
   base: baseObjectGetter,
-  ...mainObjects,
+  ...buildableObjects,
 };
-
-export const buildableObjects = { ...mainObjects };
 
 export function drawHover(
   context: CanvasRenderingContext2D,
@@ -130,28 +134,54 @@ export function drawHover(
   context.setLineDash([]);
 }
 
-function getForegroundObjectGetter<Name extends ForegroundObjectName>(
-  name: Name,
-  maxHealth: number,
-  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void,
-  getStateFromBlockX: (blockX: number) => ForegroundObjectState[Name],
-  staticState?: Partial<ForegroundObjectWithState<Name>>,
-) {
+function getForegroundObjectGetter<Name extends ForegroundObjectName>({
+  name,
+  maxHealth,
+  getState,
+  upgrades,
+  extra,
+  draw,
+}: {
+  name: Name;
+  maxHealth: number;
+  getState?: (blockX: number) => ForegroundObjectState[Name];
+  upgrades: Record<ForegroundObjectUpgrades[Name][number], 1>;
+  extra?: Partial<ForegroundObjectWithState<Name>>;
+  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
+}): {
+  get: (blockX: number) => ForegroundObjectWithState<Name>;
+  name: Name;
+  width: number;
+  height: number;
+  health: number;
+  maxHealth: number;
+  draw: (context: CanvasRenderingContext2D, { x, y }: Point) => void;
+} {
   const statics = {
     name,
-    draw,
     width: blockSize,
     height: blockSize,
     health: maxHealth,
     maxHealth,
-    ...staticState,
+    draw,
+    ...extra,
   };
   return {
-    get: (blockX: number) => ({
-      midX: blockX * blockSize + statics.width / 2,
-      ...statics,
-      ...getStateFromBlockX?.(blockX),
-    }),
+    get: (blockX: number) => {
+      const object = {
+        mid: new Point(blockX * blockSize + statics.width / 2, -statics.height / 2),
+        upgrade,
+        ...upgrades,
+        ...statics,
+        ...getState?.(blockX),
+      } as unknown as ForegroundObjectWithState<Name>;
+
+      return object;
+
+      function upgrade(property: ForegroundObjectUpgrades[Name][number]) {
+        object[property] = Math.min(object[property] + 1, maxUpgrade) as never;
+      }
+    },
     ...statics,
   };
 }

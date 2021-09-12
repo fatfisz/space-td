@@ -5,6 +5,7 @@ import { toBlock } from 'coords';
 import { addDrawable } from 'drawables';
 import {
   BatteryObject,
+  BuildableObject,
   BuildableObjectName,
   buildableObjects,
   drawHover,
@@ -33,7 +34,7 @@ const batteries = new Set<BatteryObject>();
 const turrets = new Set<TurretObject>();
 const sun = 1;
 const solarEnergyMultiplier = 10;
-const batteryEnergyMultiplier = 1000;
+const batteryEnergyMultiplier = 100000;
 const turretEnergyMultiplier = 15;
 const rangeToDistanceMultiplier = 200;
 const powerToDamageMultiplier = 0.02;
@@ -90,7 +91,7 @@ export function initObjects() {
       context.beginPath();
       for (const target of object.targets) {
         context.moveTo(object.mid.x, object.mid.y);
-        context.lineTo(target.position.x, target.position.y);
+        context.lineTo(target.mid.x, target.mid.y);
       }
       context.stroke();
     }
@@ -100,10 +101,10 @@ export function initObjects() {
   initStatusBars(
     colors.green,
     () => objects.values(),
-    ({ midX, width, height, health, maxHealth }) => ({
-      midX,
+    ({ mid, width, height, health, maxHealth }) => ({
+      mid,
       width: width - 2,
-      y: -height - 4,
+      offsetY: -height / 2 - 4,
       value: health / maxHealth,
     }),
   );
@@ -111,10 +112,10 @@ export function initObjects() {
   initStatusBars(
     colors.blue,
     () => batteries,
-    ({ midX, width, height, energy, storage }) => ({
-      midX,
+    ({ mid, width, height, energy, storage }) => ({
+      mid,
       width: width - 2,
-      y: -height - 1,
+      offsetY: -height / 2 - 1,
       value: energy / storage,
     }),
   );
@@ -141,7 +142,9 @@ export function updateObjects() {
   for (const turret of turrets) {
     const { mid, count, range, power } = turret;
     turret.targets = getNearestAsteroids(mid, count, range * rangeToDistanceMultiplier);
-    requiredEnergy += turret.targets.length * count * power * turretEnergyMultiplier;
+    requiredEnergy +=
+      turret.targets.length * levelToPower(count) * levelToPower(power) * turretEnergyMultiplier;
+    requiredEnergy += 1;
   }
 
   const usedEnergy = Math.min(requiredEnergy, availableSolarEnergy + availableBatteryEnergy);
@@ -196,7 +199,8 @@ function drawBuiltObject(context: CanvasRenderingContext2D, blockX: number, posi
 export function getObjectBlockXFromCanvas({ x, y }: Point): number | undefined {
   const blockX = getNormalizedBlock(toBlock(x));
   const object = objects.get(blockX);
-  const height = object?.height ?? blockSize;
+  const buildingPseudoObjectHeight = activeBuildableObjectName ? blockSize : -1;
+  const height = object?.height ?? buildingPseudoObjectHeight;
   if (y <= 0 && y >= -height) {
     return blockX;
   }
@@ -208,6 +212,7 @@ export function objectClick(blockX: number | undefined) {
     activeBuildableObjectName = undefined;
   } else if (objects.has(blockX)) {
     activeObjectBlockX = blockX;
+    activeBuildableObjectName = undefined;
   } else if (activeBuildableObjectName) {
     addObject(blockX, activeBuildableObjectName);
   }
@@ -232,8 +237,11 @@ function destroyObject(blockX: number, object: ForegroundObject) {
   if (blockX === baseBlockX) {
     // TODO: end game
   }
-  addParticles(new Point(object.midX, -object.height / 2), object.height / 2, particleColors, true);
+  addParticles(object.mid, object.height / 2, particleColors, true);
   objects.delete(blockX);
+  if (activeObjectBlockX === blockX) {
+    activeObjectBlockX = undefined;
+  }
 
   if (object.name === 'solar') {
     solars.delete(object);
@@ -245,7 +253,9 @@ function destroyObject(blockX: number, object: ForegroundObject) {
 }
 
 export function getActiveObject() {
-  return typeof activeObjectBlockX !== 'undefined' ? objects.get(activeObjectBlockX) : undefined;
+  return typeof activeObjectBlockX !== 'undefined'
+    ? (objects.get(activeObjectBlockX) as BuildableObject)
+    : undefined;
 }
 
 export function getActiveBuildableObjectName() {
@@ -272,4 +282,8 @@ export function getCollidingObject(points: Point[]) {
 
 function getNormalizedBlock(blockX: number) {
   return blockX > baseBlockX && blockX < baseBlockX + baseSize ? baseBlockX : blockX;
+}
+
+function levelToPower(level: number) {
+  return 1 + Math.round(Math.log(level) * 10) / 10;
 }
