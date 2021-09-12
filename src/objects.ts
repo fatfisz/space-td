@@ -154,9 +154,10 @@ export function updateObjects() {
     }
   }
 
+  // Batteries are sorted by energy descending because of the logic
   let batteryDiffEnergy = (availableSolarEnergy - usedEnergy) / batteryEnergyMultiplier;
   if (batteryDiffEnergy > 0) {
-    const sortedBatteries = [...batteries].sort((a, b) => b.energy - a.energy);
+    const sortedBatteries = [...batteries];
     for (let index = 0; index < sortedBatteries.length; index += 1) {
       const battery = sortedBatteries[index];
       const replenishedEnergy = Math.min(
@@ -167,7 +168,7 @@ export function updateObjects() {
       batteryDiffEnergy -= replenishedEnergy;
     }
   } else if (batteryDiffEnergy < 0) {
-    const sortedBatteries = [...batteries].sort((a, b) => a.energy - b.energy);
+    const sortedBatteries = [...batteries].reverse();
     for (let index = 0; index < sortedBatteries.length; index += 1) {
       const battery = sortedBatteries[index];
       const drainedEnergy = Math.max(
