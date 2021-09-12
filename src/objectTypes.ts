@@ -52,7 +52,7 @@ export const maxUpgrade = 3;
 
 const baseObjectGetter = getForegroundObjectGetter({
   name: 'base',
-  maxHealth: 10,
+  maxHealth: 20,
   extra: {
     width: 3 * blockSize,
     height: 3 * blockSize,
@@ -100,7 +100,7 @@ export const buildableObjects = {
   }),
   turret: getForegroundObjectGetter({
     name: 'turret',
-    maxHealth: 6,
+    maxHealth: 8,
     draw: (context, { x, y }) => {
       context.font = '20px monospace';
       context.textAlign = 'center';
