@@ -1,3 +1,4 @@
+import { colors } from 'colors';
 import { baseBlockX, baseBlockY, blockSize } from 'config';
 import { fromHash, toBlock, toHash } from 'coords';
 import { addDrawable } from 'drawables';
@@ -18,7 +19,7 @@ export function initGround() {
     const blockY1 = Math.max(toBlock(y1), 0);
     const blockX2 = toBlock(x2);
     const blockY2 = toBlock(y2);
-    context.fillStyle = 'sienna';
+    context.fillStyle = colors.brown;
 
     for (let blockY = blockY1; blockY <= blockY2; blockY += 1) {
       for (let blockX = blockX1; blockX <= blockX2; blockX += 1) {
