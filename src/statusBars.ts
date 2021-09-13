@@ -11,7 +11,7 @@ export function initStatusBars<StatusableObject>(
     width: number;
   },
 ) {
-  addDrawable('statusBars', (context) => {
+  addDrawable('decorative', (context) => {
     context.lineWidth = 2;
     context.strokeStyle = color;
     context.beginPath();

@@ -15,7 +15,7 @@ import {
 import { drawDrawables } from 'drawables';
 import { useGuiFolder } from 'gui';
 import { drawMenu, getMenuItemFromMouse, menuItemClick } from 'menu';
-import { getObjectBlockXFromCanvas, getObjectsRangeWithOffset, objectClick } from 'objects';
+import { getMaxObjectsRange, getObjectHashFromCanvas, objectClick } from 'objects';
 import { Point } from 'point';
 
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
@@ -29,7 +29,7 @@ let canvasPosition = Point.empty;
 let menuItemIndex: number | undefined;
 let mouseDownPosition = Point.empty;
 let canvasAtMouseDownPosition = Point.empty;
-let objectBlockXAtMouseDown: number | undefined;
+let objectHashAtMouseDown: string | undefined;
 let dragging = false;
 let menuClicked = false;
 
@@ -113,9 +113,9 @@ function initMouse() {
     if (
       !dragging &&
       !menuClicked &&
-      objectBlockXAtMouseDown === getObjectBlockXFromCanvas(canvasPosition)
+      objectHashAtMouseDown === getObjectHashFromCanvas(canvasPosition)
     ) {
-      objectClick(objectBlockXAtMouseDown);
+      objectClick(objectHashAtMouseDown);
     }
     clearMouseDown();
   });
@@ -150,7 +150,7 @@ function updateCameraFromCanvas(canvasPosition: Point) {
   );
 
   // Correct for bounds
-  const [minX, maxX] = getObjectsRangeWithOffset();
+  const [minX, maxX] = getMaxObjectsRange();
   cameraPosition = cameraPosition.ensureWithin(
     minX + (displayWidth / 2 + 1) / cameraZoom,
     minVisibleY + (displayHeight / 2 + 1) / cameraZoom,
@@ -168,7 +168,7 @@ function updateCameraFromCanvas(canvasPosition: Point) {
 function initMouseDown() {
   mouseDownPosition = mousePosition;
   canvasAtMouseDownPosition = canvasPosition;
-  objectBlockXAtMouseDown = getObjectBlockXFromCanvas(canvasPosition);
+  objectHashAtMouseDown = getObjectHashFromCanvas(canvasPosition);
 }
 
 function clearMouse() {
@@ -180,7 +180,7 @@ function clearMouse() {
 function clearMouseDown() {
   mouseDownPosition = Point.empty;
   canvasAtMouseDownPosition = Point.empty;
-  objectBlockXAtMouseDown = undefined;
+  objectHashAtMouseDown = undefined;
   dragging = false;
   menuClicked = false;
 }

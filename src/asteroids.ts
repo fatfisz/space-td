@@ -2,7 +2,7 @@ import { colors } from 'colors';
 import { blockSize, minVisibleY } from 'config';
 import { addDrawable, removeDrawable } from 'drawables';
 import { randomBetween } from 'math';
-import { getCollidingObject, getObjectsRangeWithOffset } from 'objects';
+import { getCollidingObject, getMaxObjectsRange } from 'objects';
 import { addParticles } from 'particles';
 import { Point } from 'point';
 import { initStatusBars } from 'statusBars';
@@ -82,7 +82,7 @@ function addAsteroid(
   mass = Math.floor(randomBetween(minMass, maxMass + 1)),
   angle = randomBetween(-maxAngle, maxAngle),
   speed = randomBetween(minSpeed, maxSpeed) / mass,
-  mid = new Point(randomBetween(...getObjectsRangeWithOffset()) + Math.tan(angle) * spawnY, spawnY),
+  mid = new Point(randomBetween(...getMaxObjectsRange()) + Math.tan(angle) * spawnY, spawnY),
 ) {
   const asteroid = {
     mass,

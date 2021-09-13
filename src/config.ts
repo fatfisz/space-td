@@ -34,4 +34,6 @@ export const verticalTextOffset = 1;
 
 export const baseBlockX = -1;
 
+export const baseBlockY = -1;
+
 export const baseSize = 3;
