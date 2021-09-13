@@ -26,22 +26,15 @@ const drawablePriorityId = Object.fromEntries(
   priorityOrder.map((name, index) => [name, index]),
 ) as Record<Priority, number>;
 
-const drawables = new Map<number, [priorityId: number, draw: Draw]>();
-let lastHandle = 0;
+const drawables = new Set<[priorityId: number, draw: Draw]>();
 
 export function addDrawable(priority: Priority, draw: Draw) {
-  lastHandle += 1;
-  drawables.set(lastHandle, [drawablePriorityId[priority], draw]);
-  return lastHandle;
-}
-
-export function removeDrawable(handle: number) {
-  drawables.delete(handle);
+  drawables.add([drawablePriorityId[priority], draw]);
 }
 
 export function drawDrawables(context: CanvasRenderingContext2D, displayState: DisplayState) {
   const drawGroupedByPriority = priorityOrder.map<Draw[]>(() => []);
-  for (const [priority, draw] of drawables.values()) {
+  for (const [priority, draw] of drawables) {
     drawGroupedByPriority[priority].push(draw);
   }
   for (const drawGroup of drawGroupedByPriority) {

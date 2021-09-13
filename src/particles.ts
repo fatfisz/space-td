@@ -17,6 +17,10 @@ const speed = 1;
 
 let maxParticles = 0;
 
+export function resetParticles() {
+  particles.clear();
+}
+
 export function initParticles() {
   addDrawable('particles', (context) => {
     for (const particle of particles) {

@@ -33,8 +33,25 @@ let objectHashAtMouseDown: string | undefined;
 let dragging = false;
 let menuClicked = false;
 
+export function resetDisplay() {
+  cameraPosition = new Point(blockSize / 2, -displayHeight / 5);
+  cameraZoom = 1;
+
+  mousePosition = Point.empty;
+  canvasPosition = Point.empty;
+  menuItemIndex = undefined;
+  mouseDownPosition = Point.empty;
+  canvasAtMouseDownPosition = Point.empty;
+  objectHashAtMouseDown = undefined;
+  dragging = false;
+  menuClicked = false;
+}
+
 export function initDisplay() {
   initGui();
+  canvas.id = 'game';
+  canvas.style.opacity = '0';
+  canvas.style.pointerEvents = 'none';
   document.body.append(canvas);
   initMouse();
 }

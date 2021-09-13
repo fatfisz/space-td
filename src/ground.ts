@@ -3,8 +3,14 @@ import { fromHash, toBlock, toHash } from 'coords';
 import { addDrawable } from 'drawables';
 import { Point } from 'point';
 
-const dugOut = new Set<string>([`${baseBlockX + 1},0`]);
+const dugOut = new Set<string>();
 const digging = new Set<string>();
+
+export function resetGround() {
+  dugOut.clear();
+  dugOut.add(toHash(baseBlockX + 1, baseBlockY + 1));
+  digging.clear();
+}
 
 export function initGround() {
   addDrawable('ground', (context, { x1, y1, x2, y2 }) => {

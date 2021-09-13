@@ -3,6 +3,7 @@ import { colors } from 'colors';
 import { baseBlockX, baseBlockY, baseSize, blockSize, maxOffsetX } from 'config';
 import { fromHash, toBlock, toHash } from 'coords';
 import { addDrawable } from 'drawables';
+import { changeEngineState } from 'engine';
 import { digOut, getBuildableGroundBlocks, getDuggableBlocks, startDigging } from 'ground';
 import {
   BatteryObject,
@@ -21,9 +22,7 @@ import { addParticles } from 'particles';
 import { Point } from 'point';
 import { initStatusBars } from 'statusBars';
 
-const objects = new Map<string, ForegroundObject>([
-  [toHash(baseBlockX, baseBlockY), foregroundObjects.base.get(baseBlockX, baseBlockY)],
-]);
+const objects = new Map<string, ForegroundObject>();
 const particleColors = [
   colors.orange200,
   colors.orange300,
@@ -48,6 +47,15 @@ let maxBlockX = baseBlockX + baseSize - 1;
 let activeObjectHash: string | undefined;
 let activeBuildableObjectName: BuildableObjectName | undefined;
 let availableEnergyFactor = 1;
+
+export function resetObjects() {
+  objects.clear();
+  objects.set(toHash(baseBlockX, baseBlockY), foregroundObjects.base.get(baseBlockX, baseBlockY));
+  solars.clear();
+  batteries.clear();
+  turrets.clear();
+  drills.clear();
+}
 
 export function initObjects() {
   addDrawable('objects', (context, { position }) => {
@@ -297,7 +305,7 @@ function addObject(hash: string, buildableObjectName: BuildableObjectName) {
 
 function destroyObject(hash: string, object: ForegroundObject) {
   if (object.name === 'base') {
-    // TODO: end game
+    changeEngineState('end');
   }
   if (object.addParticlesWhenDestructing ?? true) {
     addParticles(object.mid, object.height / 2, particleColors, true);

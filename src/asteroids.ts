@@ -1,6 +1,6 @@
 import { colors } from 'colors';
 import { blockSize, minVisibleY } from 'config';
-import { addDrawable, removeDrawable } from 'drawables';
+import { addDrawable } from 'drawables';
 import { randomBetween } from 'math';
 import { getCollidingObject, getMaxObjectsRange } from 'objects';
 import { addParticles } from 'particles';
@@ -18,7 +18,6 @@ export interface Asteroid {
   dr: number;
   health: number;
   maxHealth: number;
-  drawableHandle: number;
   vertexOffsets: number[];
   computedVertices: Point[];
 }
@@ -43,7 +42,42 @@ const particleColors = [
   colors.grey600,
 ];
 
+export function resetAsteroids() {
+  asteroids.clear();
+}
+
 export function initAsteroids() {
+  addDrawable('objects', (context, { x1, y1, width, height }) => {
+    for (const asteroid of asteroids) {
+      if (
+        !asteroid.mid.within(
+          x1 - asteroid.radius,
+          y1 - asteroid.radius,
+          width + asteroid.radius * 2,
+          height + asteroid.radius * 2,
+        )
+      ) {
+        continue;
+      }
+
+      context.fillStyle = colors.grey500;
+      context.strokeStyle = colors.grey300;
+      context.beginPath();
+      let first = true;
+      for (const { x, y } of asteroid.computedVertices) {
+        if (first) {
+          first = false;
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+  });
+
   initStatusBars(
     colors.green,
     () => asteroids,
@@ -95,34 +129,6 @@ function addAsteroid(
     dr: (Math.sign(Math.random() - 0.5) * randomBetween(minRotation, maxRotation)) / mass,
     health: 2 ** mass,
     maxHealth: 2 ** mass,
-    drawableHandle: addDrawable('objects', (context, { x1, y1, width, height }) => {
-      if (
-        !asteroid.mid.within(
-          x1 - asteroid.radius,
-          y1 - asteroid.radius,
-          width + asteroid.radius * 2,
-          height + asteroid.radius * 2,
-        )
-      ) {
-        return;
-      }
-
-      context.fillStyle = colors.grey500;
-      context.strokeStyle = colors.grey300;
-      context.beginPath();
-      let first = true;
-      for (const { x, y } of asteroid.computedVertices) {
-        if (first) {
-          first = false;
-          context.moveTo(x, y);
-        } else {
-          context.lineTo(x, y);
-        }
-      }
-      context.closePath();
-      context.fill();
-      context.stroke();
-    }),
     vertexOffsets: getAsteroidVertexOffsets(mass),
     computedVertices: [],
   };
@@ -131,7 +137,7 @@ function addAsteroid(
 }
 
 function destroyAsteroid(asteroid: Asteroid) {
-  deleteAsteroid(asteroid);
+  asteroids.delete(asteroid);
   addParticles(asteroid.mid, asteroid.radius, particleColors);
   if (asteroid.mass === 1) {
     return;
@@ -162,11 +168,6 @@ function checkAsteroidForCollisions(asteroid: Asteroid) {
   if (asteroid.computedVertices.some(({ y }) => y > 0)) {
     destroyAsteroid(asteroid);
   }
-}
-
-function deleteAsteroid(asteroid: Asteroid) {
-  asteroids.delete(asteroid);
-  removeDrawable(asteroid.drawableHandle);
 }
 
 function getAsteroidVertexOffsets(mass: number) {
