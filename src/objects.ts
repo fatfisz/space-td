@@ -4,6 +4,7 @@ import { baseBlockX, baseBlockY, baseSize, blockSize, maxOffsetX } from 'config'
 import { fromHash, toBlock, toHash } from 'coords';
 import { addDrawable } from 'drawables';
 import { changeEngineState } from 'engine';
+import { fps } from 'frame';
 import { digOut, getBuildableGroundBlocks, getDuggableBlocks, startDigging } from 'ground';
 import {
   BatteryObject,
@@ -38,16 +39,21 @@ const drills = new Set<DrillObject>();
 const sun = 1;
 const baseEnergy = 20;
 const solarEnergyMultiplier = 10;
-const batteryEnergyMultiplier = 1000;
 const turretEnergyMultiplier = 15;
+const batteryEnergyMultiplier = 5 * fps * turretEnergyMultiplier;
 const drillEnergy = 5;
 const rangeToDistanceMultiplier = 200;
 const powerToDamageMultiplier = 0.02;
+const resourcesPerDig = 100;
+const stats = {
+  energy: 1,
+  battery: 0,
+  resources: 0,
+};
 let minBlockX = baseBlockX;
 let maxBlockX = baseBlockX + baseSize - 1;
 let activeObjectHash: string | undefined;
 let activeBuildableObjectName: BuildableObjectName | undefined;
-let availableEnergyFactor = 1;
 
 export function resetObjects() {
   objects.clear();
@@ -85,7 +91,7 @@ export function initObjects() {
   });
 
   addDrawable('backgroundObjects', (context) => {
-    const opacity = Math.floor(availableEnergyFactor * 15);
+    const opacity = Math.floor(stats.energy * 15);
     context.strokeStyle = `${colors.red}${opacity.toString(16)}`;
     for (const object of objects.values()) {
       if (object.name !== 'turret') {
@@ -159,22 +165,22 @@ export function updateObjects() {
     turret.targets = getNearestAsteroids(mid, count, range * rangeToDistanceMultiplier);
     requiredEnergy +=
       turret.targets.length * levelToPower(count) * levelToPower(power) * turretEnergyMultiplier;
-    requiredEnergy += 1;
   }
   requiredEnergy += drills.size * drillEnergy;
 
   const usedEnergy = Math.min(requiredEnergy, availableSolarEnergy + availableBatteryEnergy);
-  availableEnergyFactor = usedEnergy / requiredEnergy;
+  // When there's no required energy, set to 1
+  stats.energy = usedEnergy / requiredEnergy || 1;
 
   for (const turret of turrets) {
     const { targets, power } = turret;
     for (const target of targets) {
-      target.health -= power * powerToDamageMultiplier * availableEnergyFactor;
+      target.health -= power * powerToDamageMultiplier * stats.energy;
     }
   }
 
   for (const drill of drills) {
-    drill.ticksLeft -= availableEnergyFactor;
+    drill.ticksLeft -= stats.energy;
     if (drill.ticksLeft <= 0) {
       const blockX = toBlock(drill.mid.x);
       const blockY = toBlock(drill.mid.y);
@@ -207,6 +213,14 @@ export function updateObjects() {
       batteryDiffEnergy -= drainedEnergy;
     }
   }
+
+  let batteryEnergy = 0;
+  let batteryStorage = 0;
+  for (const { energy, storage } of batteries) {
+    batteryEnergy += energy;
+    batteryStorage += storage;
+  }
+  stats.battery = batteryEnergy / batteryStorage;
 }
 
 function getBuildableBlocks() {
@@ -305,13 +319,13 @@ function addObject(hash: string, buildableObjectName: BuildableObjectName) {
 }
 
 function destroyObject(hash: string, object: ForegroundObject) {
+  objects.delete(hash);
   if (object.name === 'base') {
     changeEngineState('end');
   }
   if (object.addParticlesWhenDestructing ?? true) {
     addParticles(object.mid, object.height / 2, particleColors, true);
   }
-  objects.delete(hash);
   if (activeObjectHash === hash) {
     activeObjectHash = undefined;
   }
@@ -325,7 +339,22 @@ function destroyObject(hash: string, object: ForegroundObject) {
   } else if (object.name === 'drill') {
     drills.delete(object);
     digOut(hash);
+    stats.resources += resourcesPerDig;
   }
+}
+
+export function getStats() {
+  return stats;
+}
+
+export function getScore() {
+  const baseExists = objects.has(toHash(baseBlockX, baseBlockY));
+  if (baseExists) {
+    return `Score: ${stats.resources}`;
+  }
+  return `Score: ${Math.round(
+    stats.resources / 2,
+  )}<br><div class=smol>(destroyed base: -50%)</div>`;
 }
 
 export function getActiveObject() {

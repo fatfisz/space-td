@@ -9,6 +9,7 @@ import {
   menuHeight,
   minVisibleY,
   minZoom,
+  statsHeight,
   zoomStep,
 } from 'config';
 import { drawDrawables } from 'drawables';
@@ -61,7 +62,7 @@ export function updateDisplay() {
   drawDrawables(context, {
     position: canvasPosition,
     x1: cameraPosition.x - (displayWidth / 2 + 1) / cameraZoom,
-    y1: cameraPosition.y - (displayHeight / 2 + 1) / cameraZoom,
+    y1: cameraPosition.y - (displayHeight / 2 - statsHeight + 1) / cameraZoom,
     x2: cameraPosition.x + (displayWidth / 2 + 1) / cameraZoom,
     y2: cameraPosition.y + (displayHeight / 2 - menuHeight + 1) / cameraZoom,
     width: (displayWidth + 2) / cameraZoom,

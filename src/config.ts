@@ -20,13 +20,15 @@ export const blockSize = 24;
 
 export const padding = 8;
 
-export const menuLabelHeight = 24;
+export const labelHeight = 24;
+
+export const statsHeight = 2 * padding + labelHeight;
 
 export const menuOptionWidth = 100;
 
-export const menuOptionHeight = menuLabelHeight + blockSize + padding;
+export const menuOptionHeight = labelHeight + blockSize + padding;
 
-export const menuHeight = menuLabelHeight + menuOptionHeight;
+export const menuHeight = labelHeight + menuOptionHeight;
 
 export const menuTop = displayHeight - menuHeight;
 

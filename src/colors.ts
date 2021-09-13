@@ -10,7 +10,7 @@ export const colors = {
   orange600: '#f40',
   orange700: '#f20',
   yellow: '#ff0',
-  green: '#0f0',
+  green: '#0c0',
   blue: '#49f',
   brown: '#643',
   grey100: '#eee',

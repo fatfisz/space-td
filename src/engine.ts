@@ -4,7 +4,7 @@ import { colors } from 'colors';
 import { initDisplay, resetDisplay, updateDisplay } from 'display';
 import { initGround, resetGround } from 'ground';
 import { initGui, updateGui } from 'gui';
-import { initObjects, resetObjects, updateObjects } from 'objects';
+import { getScore, initObjects, resetObjects, updateObjects } from 'objects';
 import { initParticles, resetParticles, updateParticles } from 'particles';
 import { initStartingScreen } from 'startingScreen';
 
@@ -35,15 +35,15 @@ export function initEngine() {
 }
 
 export function engineTick() {
-  updateBackground();
-  updateDisplay();
-  updateGui();
-
   if (state === 'play' || state === 'end') {
     updateParticles();
     updateAsteroids();
     updateObjects();
   }
+
+  updateBackground();
+  updateDisplay();
+  updateGui();
 }
 
 export function changeEngineState(nextState: State) {
@@ -71,6 +71,7 @@ export function changeEngineState(nextState: State) {
     window.game.style.opacity = '0';
     window.game.style.pointerEvents = 'none';
     window.main.style.opacity = '';
+    window.score.innerHTML = getScore();
     setTimeout(() => {
       changeEngineState('init');
     }, 2000);
