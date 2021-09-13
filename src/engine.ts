@@ -56,9 +56,9 @@ export function changeEngineState(nextState: State) {
     window.game.style.opacity = '';
     window.game.style.pointerEvents = '';
     window.main.style.opacity = '0';
+    window.main.style.pointerEvents = 'none';
     setTimeout(() => {
       window.main.style.background = colors.white;
-      window.main.style.pointerEvents = 'none';
     }, 2000);
 
     resetDisplay();
