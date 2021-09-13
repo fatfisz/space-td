@@ -22,7 +22,7 @@ export interface Asteroid {
   computedVertices: Point[];
 }
 
-const maxAsteroids = 80;
+const maxAsteroids = 20;
 const minMass = 1;
 const maxMass = 4;
 const maxAngle = Math.PI / 6;
@@ -31,7 +31,7 @@ const maxSpeed = 1.5;
 const spawnY = minVisibleY - 100;
 const minRotation = 0.01;
 const maxRotation = 0.04;
-const asteroidChance = 0.05;
+const asteroidChance = 0.02;
 const asteroids = new Set<Asteroid>();
 const particleColors = [
   colors.grey100,
