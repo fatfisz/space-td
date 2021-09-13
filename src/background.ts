@@ -17,7 +17,8 @@ canvas.style.background = colors.black;
 const stars: Star[] = [];
 const size = 3;
 const starCount = 200;
-const maxRadius = new Point(0, 0).distance(new Point(displayWidth / 2, displayHeight));
+const offset = 100;
+const maxRadius = new Point(0, 0).distance(new Point(displayWidth / 2, displayHeight)) + offset;
 
 export function initBackground() {
   document.body.append(canvas);
@@ -41,7 +42,7 @@ export function updateBackground() {
   for (const star of stars) {
     const mid = new Point(
       star.mid.x * Math.cos(angle) - star.mid.y * Math.sin(angle) + displayWidth / 2,
-      star.mid.y * Math.cos(angle) + star.mid.x * Math.sin(angle) + displayHeight,
+      star.mid.y * Math.cos(angle) + star.mid.x * Math.sin(angle) + displayHeight + offset,
     );
     if (!mid.within(0, 0, displayWidth, displayHeight)) {
       continue;
