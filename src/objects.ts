@@ -84,8 +84,8 @@ export function initObjects() {
   });
 
   addDrawable('backgroundObjects', (context) => {
-    const opacity = Math.floor(availableEnergyFactor * 15).toString(16);
-    context.strokeStyle = `${colors.red}${opacity}`;
+    const opacity = Math.floor(availableEnergyFactor * 15);
+    context.strokeStyle = `${colors.red}${opacity.toString(16)}`;
     for (const object of objects.values()) {
       if (object.name !== 'turret') {
         continue;
@@ -253,7 +253,7 @@ function drawBuildableBlock(context: CanvasRenderingContext2D, block: Point, mou
     (block.y + 0.5) * blockSize,
     blockSize / 3,
     0,
-    2 * Math.PI,
+    Math.PI * 2,
   );
   context.moveTo((block.x + 0.3) * blockSize, (block.y + 0.5) * blockSize);
   context.lineTo((block.x + 0.7) * blockSize, (block.y + 0.5) * blockSize);

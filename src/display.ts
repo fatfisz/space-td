@@ -1,5 +1,4 @@
 import { getCanvas } from 'canvas';
-import { colors } from 'colors';
 import {
   blockSize,
   displayHeight,
@@ -19,7 +18,6 @@ import { getMaxObjectsRange, getObjectHashFromCanvas, objectClick } from 'object
 import { Point } from 'point';
 
 const [canvas, context] = getCanvas(displayWidth, displayHeight);
-canvas.style.background = colors.black;
 
 let cameraPosition = new Point(blockSize / 2, -displayHeight / 5);
 let cameraZoom = 1;

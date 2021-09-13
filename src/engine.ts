@@ -1,4 +1,5 @@
 import { initAsteroids, resetAsteroids, updateAsteroids } from 'asteroids';
+import { initBackground, updateBackground } from 'background';
 import { colors } from 'colors';
 import { initDisplay, resetDisplay, updateDisplay } from 'display';
 import { initGround, resetGround } from 'ground';
@@ -24,6 +25,7 @@ export function initEngine() {
   document.body.style.background = colors.blue;
 
   initGui();
+  initBackground();
   initDisplay();
   initStartingScreen();
   initAsteroids();
@@ -33,6 +35,7 @@ export function initEngine() {
 }
 
 export function engineTick() {
+  updateBackground();
   updateDisplay();
   updateGui();
 
