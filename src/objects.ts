@@ -1,6 +1,6 @@
 import { getNearestAsteroids } from 'asteroids';
 import { colors } from 'colors';
-import { baseBlockX, baseBlockY, baseSize, blockSize, maxOffsetX } from 'config';
+import { baseBlockX, baseBlockY, baseSize, blockSize, buildCost, maxOffsetX } from 'config';
 import { fromHash, toBlock, toHash } from 'coords';
 import { addDrawable } from 'drawables';
 import { changeEngineState } from 'engine';
@@ -227,7 +227,7 @@ function getBuildableBlocks() {
   if (!activeBuildableObjectName) {
     return [];
   }
-  if (activeBuildableObjectName === 'drill') {
+  if (activeBuildableObjectName === 'drill (free)') {
     return getDuggableBlocks().filter(
       (block) =>
         !objects.has(toHash(block.x, block.y)) && !objects.has(toHash(block.x, block.y - 1)),
@@ -290,7 +290,7 @@ export function objectClick(hash: string | undefined) {
     activeObjectHash = undefined;
     activeBuildableObjectName = undefined;
   } else if (objects.has(hash)) {
-    if (objects.get(hash)!.name !== 'drill') {
+    if (objects.get(hash)!.name !== 'drill (free)') {
       activeObjectHash = hash;
     }
     activeBuildableObjectName = undefined;
@@ -300,6 +300,13 @@ export function objectClick(hash: string | undefined) {
 }
 
 function addObject(hash: string, buildableObjectName: BuildableObjectName) {
+  if (buildableObjectName !== 'drill (free)') {
+    if (stats.resources < buildCost) {
+      return;
+    }
+    stats.resources -= buildCost;
+  }
+
   const [blockX, blockY] = fromHash(hash);
   minBlockX = Math.min(blockX, minBlockX);
   maxBlockX = Math.max(blockX, maxBlockX);
@@ -312,7 +319,7 @@ function addObject(hash: string, buildableObjectName: BuildableObjectName) {
     batteries.add(object);
   } else if (object.name === 'turret') {
     turrets.add(object);
-  } else if (object.name === 'drill') {
+  } else if (object.name === 'drill (free)') {
     drills.add(object);
     startDigging(hash);
   }
@@ -336,7 +343,7 @@ function destroyObject(hash: string, object: ForegroundObject) {
     batteries.delete(object);
   } else if (object.name === 'turret') {
     turrets.delete(object);
-  } else if (object.name === 'drill') {
+  } else if (object.name === 'drill (free)') {
     drills.delete(object);
     digOut(hash);
     stats.resources += resourcesPerDig;

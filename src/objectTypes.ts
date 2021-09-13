@@ -1,12 +1,13 @@
 import { Asteroid } from 'asteroids';
 import { colors } from 'colors';
-import { baseSize, blockSize, verticalTextOffset } from 'config';
+import { baseSize, blockSize, upgradeCost, verticalTextOffset } from 'config';
 import { fps, globalFrame } from 'frame';
+import { getStats } from 'objects';
 import { Point } from 'point';
 
 type BaseObjectName = 'base';
 
-export type BuildableObjectName = 'solar panel' | 'battery' | 'turret' | 'drill';
+export type BuildableObjectName = 'solar panel' | 'battery' | 'turret' | 'drill (free)';
 
 export type ForegroundObjectName = BaseObjectName | BuildableObjectName;
 
@@ -15,7 +16,7 @@ export interface ForegroundObjectUpgrades {
   'solar panel': ['efficiency', 'armor'];
   battery: ['storage', 'armor'];
   turret: ['power', 'range', 'count', 'armor'];
-  drill: [];
+  'drill (free)': [];
 }
 
 interface ForegroundObjectState {
@@ -23,7 +24,7 @@ interface ForegroundObjectState {
   'solar panel': Record<string, unknown>;
   battery: { energy: number };
   turret: { targets: Asteroid[] };
-  drill: { ticksLeft: number };
+  'drill (free)': { ticksLeft: number };
 }
 
 export type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
@@ -48,7 +49,7 @@ export type BatteryObject = ForegroundObjectWithState<'battery'>;
 
 export type TurretObject = ForegroundObjectWithState<'turret'>;
 
-export type DrillObject = ForegroundObjectWithState<'drill'>;
+export type DrillObject = ForegroundObjectWithState<'drill (free)'>;
 
 export type BuildableObject = SolarObject | BatteryObject | TurretObject | DrillObject;
 
@@ -129,8 +130,8 @@ export const buildableObjects = {
       context.fillText('🔫', x + blockSize / 2, y + blockSize / 2 + verticalTextOffset);
     },
   }),
-  drill: getForegroundObjectGetter({
-    name: 'drill',
+  'drill (free)': getForegroundObjectGetter({
+    name: 'drill (free)',
     maxHealth: Infinity,
     getState: () => ({ ticksLeft: drillStartingTicks }),
     upgrades: {},
@@ -212,7 +213,12 @@ function getForegroundObjectGetter<Name extends ForegroundObjectName>({
       return object;
 
       function upgrade(property: ForegroundObjectUpgrades[Name][number]) {
-        object[property] = Math.min(object[property] + 1, maxUpgrade) as never;
+        const stats = getStats();
+        if (stats.resources < upgradeCost || object[property] === maxUpgrade) {
+          return;
+        }
+        stats.resources -= upgradeCost;
+        object[property] = (object[property] + 1) as never;
       }
     },
     ...statics,

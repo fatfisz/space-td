@@ -39,3 +39,7 @@ export const baseBlockX = -1;
 export const baseBlockY = -1;
 
 export const baseSize = 3;
+
+export const buildCost = 50;
+
+export const upgradeCost = 100;

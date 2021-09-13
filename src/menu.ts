@@ -1,6 +1,7 @@
 import { colors } from 'colors';
 import {
   blockSize,
+  buildCost,
   displayHeight,
   displayWidth,
   labelHeight,
@@ -9,6 +10,7 @@ import {
   menuOptionWidth,
   padding,
   statsHeight,
+  upgradeCost,
   verticalTextOffset,
 } from 'config';
 import { changeEngineState } from 'engine';
@@ -32,6 +34,7 @@ const menuButtonTop = menuTop + labelHeight;
 const menus = {
   build: getMenu(
     Object.values(buildableObjects),
+    buildCost,
     (context, { left, active }, { name, width, draw }) => {
       context.font = '12px monospace';
       context.fillStyle = active ? colors.black : colors.white;
@@ -62,6 +65,7 @@ const menus = {
 export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: number | undefined) {
   const stats = getStats();
   const activeMenu = getActiveMenu();
+  const { draw, cost } = menus[activeMenu];
 
   // Stats
   context.fillStyle = colors.grey700;
@@ -117,12 +121,12 @@ export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: numbe
   context.textAlign = 'left';
   context.textBaseline = 'middle';
   context.fillText(
-    capitalize(activeMenu),
+    capitalize(`${activeMenu} (cost: ${cost})`),
     padding,
     menuTop + 0.5 + labelHeight / 2 + verticalTextOffset,
   );
 
-  menus[activeMenu].draw(context, menuItemIndex);
+  draw(context, menuItemIndex);
 }
 
 export function getMenuItemFromMouse(point: Point) {
@@ -165,6 +169,7 @@ function getActiveMenu(): keyof typeof menus {
 
 function getMenu<Options extends unknown[]>(
   options: Options,
+  cost: number,
   drawOption: (
     context: CanvasRenderingContext2D,
     params: { left: number; active: boolean; hover: boolean },
@@ -175,6 +180,7 @@ function getMenu<Options extends unknown[]>(
 ) {
   return {
     options,
+    cost,
     draw: (context: CanvasRenderingContext2D, menuItemIndex: number | undefined) => {
       for (const [index, option] of options.entries()) {
         const left = menuOptionWidth * index;
@@ -202,6 +208,7 @@ function getUpgradeMenu<Name extends keyof ForegroundObjectUpgrades>(
 ) {
   return getMenu(
     upgrades,
+    upgradeCost,
     (context, { left, active }, name) => {
       context.font = '12px monospace';
       context.fillStyle = active ? colors.black : colors.white;
