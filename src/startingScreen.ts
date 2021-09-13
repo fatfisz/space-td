@@ -1,10 +1,6 @@
 import { changeEngineState } from 'engine';
 
 export function initStartingScreen() {
-  const style = document.createElement('style');
-  style.textContent = `#main{text-align:center}.margin{margin-top:10vmin}.smol{font-size:.75em}`;
-  document.head.append(style);
-
   const main = document.createElement('div');
   main.className = 'screen';
   main.id = 'main';
