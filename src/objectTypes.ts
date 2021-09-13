@@ -6,13 +6,13 @@ import { Point } from 'point';
 
 type BaseObjectName = 'base';
 
-export type BuildableObjectName = 'solar' | 'battery' | 'turret' | 'drill';
+export type BuildableObjectName = 'solar panel' | 'battery' | 'turret' | 'drill';
 
 export type ForegroundObjectName = BaseObjectName | BuildableObjectName;
 
 export interface ForegroundObjectUpgrades {
   base: ['armor'];
-  solar: ['efficiency', 'armor'];
+  'solar panel': ['efficiency', 'armor'];
   battery: ['storage', 'armor'];
   turret: ['power', 'range', 'count', 'armor'];
   drill: [];
@@ -20,7 +20,7 @@ export interface ForegroundObjectUpgrades {
 
 interface ForegroundObjectState {
   base: Record<string, unknown>;
-  solar: Record<string, unknown>;
+  'solar panel': Record<string, unknown>;
   battery: { energy: number };
   turret: { targets: Asteroid[] };
   drill: { ticksLeft: number };
@@ -42,7 +42,7 @@ export type ForegroundObjectWithState<Name extends ForegroundObjectName> = {
 
 type BaseObject = ForegroundObjectWithState<'base'>;
 
-export type SolarObject = ForegroundObjectWithState<'solar'>;
+export type SolarObject = ForegroundObjectWithState<'solar panel'>;
 
 export type BatteryObject = ForegroundObjectWithState<'battery'>;
 
@@ -82,8 +82,8 @@ const baseObjectGetter = getForegroundObjectGetter({
 });
 
 export const buildableObjects = {
-  solar: getForegroundObjectGetter({
-    name: 'solar',
+  'solar panel': getForegroundObjectGetter({
+    name: 'solar panel',
     maxHealth: 2,
     getState: () => ({}),
     upgrades: {

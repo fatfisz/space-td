@@ -292,7 +292,7 @@ function addObject(hash: string, buildableObjectName: BuildableObjectName) {
   const object = buildableObjects[buildableObjectName].get(blockX, blockY);
   objects.set(hash, object);
 
-  if (object.name === 'solar') {
+  if (object.name === 'solar panel') {
     solars.add(object);
   } else if (object.name === 'battery') {
     batteries.add(object);
@@ -316,7 +316,7 @@ function destroyObject(hash: string, object: ForegroundObject) {
     activeObjectHash = undefined;
   }
 
-  if (object.name === 'solar') {
+  if (object.name === 'solar panel') {
     solars.delete(object);
   } else if (object.name === 'battery') {
     batteries.delete(object);

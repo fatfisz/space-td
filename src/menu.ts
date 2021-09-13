@@ -30,7 +30,7 @@ const menus = {
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(
-        name,
+        capitalize(name),
         left + menuOptionWidth / 2,
         menuButtonTop + menuLabelHeight / 2 + verticalTextOffset,
       );
@@ -49,7 +49,7 @@ const menus = {
     },
   ),
   'upgrade base': getUpgradeMenu<'base'>(['armor']),
-  'upgrade solar': getUpgradeMenu<'solar'>(['efficiency', 'armor']),
+  'upgrade solar panel': getUpgradeMenu<'solar panel'>(['efficiency', 'armor']),
   'upgrade battery': getUpgradeMenu<'battery'>(['storage', 'armor']),
   'upgrade turret': getUpgradeMenu<'turret'>(['power', 'range', 'count', 'armor']),
 };
@@ -67,7 +67,11 @@ export function drawMenu(context: CanvasRenderingContext2D, menuItemIndex: numbe
   context.font = '12px monospace';
   context.textAlign = 'left';
   context.textBaseline = 'middle';
-  context.fillText(activeMenu, padding, menuTop + 0.5 + menuLabelHeight / 2 + verticalTextOffset);
+  context.fillText(
+    capitalize(activeMenu),
+    padding,
+    menuTop + 0.5 + menuLabelHeight / 2 + verticalTextOffset,
+  );
 
   menus[activeMenu].draw(context, menuItemIndex);
 }
@@ -148,14 +152,14 @@ function getUpgradeMenu<Name extends keyof ForegroundObjectUpgrades>(
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillText(
-        name,
+        capitalize(name),
         left + menuOptionWidth / 2,
         menuButtonTop + menuLabelHeight / 2 + verticalTextOffset,
       );
 
       const value = getActiveObject()![name as never];
       context.fillText(
-        value === maxUpgrade ? `maxed (${value})` : `${value} 🠖 ${value + 1}`,
+        value === maxUpgrade ? `Maxed (${value})` : `${value} 🠖 ${value + 1}`,
         left + menuOptionWidth / 2,
         menuButtonTop + menuLabelHeight + blockSize / 2 + verticalTextOffset,
       );
@@ -163,5 +167,12 @@ function getUpgradeMenu<Name extends keyof ForegroundObjectUpgrades>(
     (name) => {
       getActiveObject()!.upgrade(name as never);
     },
+  );
+}
+
+function capitalize(text: string) {
+  return text.replace(
+    /(^| )([a-z])/g,
+    (all, whitespace, char) => `${whitespace}${char.toUpperCase()}`,
   );
 }
