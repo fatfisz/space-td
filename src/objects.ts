@@ -36,8 +36,9 @@ const batteries = new Set<BatteryObject>();
 const turrets = new Set<TurretObject>();
 const drills = new Set<DrillObject>();
 const sun = 1;
+const baseEnergy = 20;
 const solarEnergyMultiplier = 10;
-const batteryEnergyMultiplier = 100000;
+const batteryEnergyMultiplier = 1000;
 const turretEnergyMultiplier = 15;
 const drillEnergy = 5;
 const rangeToDistanceMultiplier = 200;
@@ -142,7 +143,7 @@ export function updateObjects() {
     }
   }
 
-  let availableSolarEnergy = 0;
+  let availableSolarEnergy = baseEnergy;
   for (const { efficiency } of solars) {
     availableSolarEnergy += efficiency * solarEnergyMultiplier * sun;
   }
